@@ -191,21 +191,65 @@ def pick_first_value(item: Dict[str, Any], keys: List[str], default: str = "") -
 
 
 def normalize_daily_stats_items(raw_items: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    def normalize_text(text: str) -> str:
+        text = "" if text is None else str(text)
+        # 兼容上游把中文以 "\\u4e2d\\u6587" 字符串形式传入
+        if "\\u" in text and not re.search(r"[\u4e00-\u9fff]", text):
+            try:
+                text = bytes(text, "utf-8").decode("unicode_escape")
+            except Exception:
+                pass
+        return text.strip()
+
     normalized: List[Dict[str, str]] = []
     for raw in raw_items:
         if not isinstance(raw, dict):
             continue
         row = {
-            "seq": pick_first_value(raw, ["seq", "序号", "sn", "serial"], ""),
-            "location": pick_first_value(raw, ["location", "施工部位", "area"], ""),
-            "content": pick_first_value(raw, ["content", "施工内容", "activity"], ""),
-            "quantity": pick_first_value(raw, ["quantity", "日完成量", "完成工程量", "qty"], ""),
-            "remarks": pick_first_value(raw, ["remarks", "备注", "remark"], ""),
+            "seq": normalize_text(pick_first_value(raw, ["seq", "序号", "sn", "serial"], "")),
+            "location": normalize_text(pick_first_value(raw, ["location", "施工部位", "area"], "")),
+            "content": normalize_text(pick_first_value(raw, ["content", "施工内容", "activity"], "")),
+            "quantity": normalize_text(pick_first_value(raw, ["quantity", "日完成量", "完成工程量", "qty"], "")),
+            "remarks": normalize_text(pick_first_value(raw, ["remarks", "备注", "remark"], "")),
         }
         # 施工内容为空的数据直接忽略
         if row["content"]:
             normalized.append(row)
     return normalized
+
+
+def parse_daily_stats_from_base64(encoded: str) -> Optional[List[Dict[str, str]]]:
+    if not encoded:
+        return None
+    try:
+        raw = base64.b64decode(encoded)
+        text = raw.decode("utf-8")
+        data = json.loads(text)
+    except Exception:
+        return None
+    if not isinstance(data, list):
+        return None
+    return normalize_daily_stats_items(data)
+
+
+def detect_garbled_daily_stats(items: List[Dict[str, str]]) -> bool:
+    """
+    识别常见乱码损坏场景：
+    - 关键字段出现连续 ???
+    - 且全文没有任何中文字符（通常代表中文已在上游丢失为 ?）
+    """
+    if not items:
+        return False
+
+    has_cjk = False
+    has_suspect = False
+    for item in items:
+        text = " ".join([item.get("location", ""), item.get("content", ""), item.get("quantity", "")])
+        if re.search(r"[\u4e00-\u9fff]", text):
+            has_cjk = True
+        if "�" in text or re.search(r"\?{2,}", text):
+            has_suspect = True
+    return has_suspect and not has_cjk
 
 
 def parse_daily_stats_from_content(content: str) -> Optional[List[Dict[str, str]]]:
@@ -345,6 +389,7 @@ class FillTemplateRequest(BaseModel):
     template_base64: str
     content: str
     daily_stats: Optional[List[Dict[str, Any]]] = None
+    daily_stats_base64: Optional[str] = None
     table_index: int = 0
     row_index: int = 4
     col_index: int = 2
@@ -383,7 +428,13 @@ async def fill_template(req: FillTemplateRequest):
         # 模式1：当日施工统计表动态更新（优先）
         use_daily_stats_mode = False
         normalized_items: List[Dict[str, str]] = []
-        if req.daily_stats is not None:
+        if req.daily_stats_base64:
+            use_daily_stats_mode = True
+            parsed_b64 = parse_daily_stats_from_base64(req.daily_stats_base64)
+            if parsed_b64 is None:
+                raise ValueError("daily_stats_base64 解析失败，请传 UTF-8 JSON 数组的 Base64")
+            normalized_items = parsed_b64
+        elif req.daily_stats is not None:
             use_daily_stats_mode = True
             normalized_items = normalize_daily_stats_items(req.daily_stats)
         else:
@@ -393,6 +444,11 @@ async def fill_template(req: FillTemplateRequest):
                 normalized_items = parsed
 
         if use_daily_stats_mode:
+            if detect_garbled_daily_stats(normalized_items):
+                raise ValueError(
+                    "检测到疑似乱码（内容出现 ??? 且无中文）。请使用 UTF-8 JSON，"
+                    "或改用 daily_stats_base64 传入（推荐）。"
+                )
             render_daily_stats_table(doc, normalized_items)
         else:
             # 模式2：兼容旧版单单元格逐行排版
