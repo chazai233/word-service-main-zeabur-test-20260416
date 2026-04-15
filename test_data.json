@@ -1,0 +1,39 @@
+{
+    "daily_stats": [
+        {
+            "seq": "1",
+            "location": "右岸道路",
+            "content": "R2道路K2+300-K2+500段路基开挖、平整及碾压",
+            "quantity": "1项",
+            "remarks": ""
+        },
+        {
+            "seq": "1",
+            "location": "右岸道路",
+            "content": "K2+040-K2+070挡墙墙背回填",
+            "quantity": "1140m³",
+            "remarks": ""
+        },
+        {
+            "seq": "2",
+            "location": "右岸砂石骨料加工系统",
+            "content": "D型衡重式挡墙第7仓混凝土浇筑",
+            "quantity": "92m³",
+            "remarks": ""
+        },
+        {
+            "seq": "2",
+            "location": "右岸砂石骨料加工系统",
+            "content": "砂石系统场内排水沟砂浆浇筑",
+            "quantity": "27m³",
+            "remarks": ""
+        },
+        {
+            "seq": "3",
+            "location": "右岸拌合系统",
+            "content": "2#240拌合楼基础柱钢筋绑扎",
+            "quantity": "1项",
+            "remarks": ""
+        }
+    ]
+}
