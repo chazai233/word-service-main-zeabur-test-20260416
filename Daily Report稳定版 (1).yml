@@ -1330,37 +1330,25 @@ workflow:
 
             右岸砂石骨料加工系统 = Right Bank Aggregate System
 
-            右岸临时120拌合站 = Right Bank Temporary Batching Plant 120(m³/h)
-
             右岸拌合系统 = Right Bank Batching System
+
+            右岸1#弃渣场 = Right Bank 1# Spoil Area
+
+            右岸2#弃渣场 = Right Bank 2# Spoil Area
+
+            左岸1#弃渣场 = Left Bank 1# Spoil Area
+
+            左岸2#弃渣场 = Left Bank 2# Spoil Area
 
             右岸坝肩 = Right Bank Abutment
 
-            右岸引航道 = Right Bank Approach Channel
+            右岸基坑 = Right Bank Foundation Pit (Approach Channel Area)
 
-            上游全年围堰 U/S Traversal Cofferdam
+            右岸施工营地 = Right Bank Construction Camp
 
-            右坝肩 Right Abutment
+            左岸EPC营地 = Left Bank EPC Camp
 
-            船闸 Ship Lock
-
-            下游引航道EL.313.0以上 D/S Approach Channel > EL.313.0
-
-            下游引航道EL.313.0~302.0 D/S Approach Channel EL.313.0-302.0
-
-            下游引航道EL.342.0以上 DS Approach Channel > EL.342.0
-
-            枯期围堰 Dry-season Cofferdam
-
-            纵向围堰 Longitudinal Cofferdam
-
-            冲积层Ⅰ区 Alluvial Layer Zone I
-
-            泄洪冲沙闸 Spillway
-
-            下游全年围堰 D/S Traversal Cofferdam
-
-            冲积层Ⅲ区 Alluvial Layer Zone III
+            左岸业主营地 = Left Bank Employer Camp
 
 
             ## 翻译规则:
