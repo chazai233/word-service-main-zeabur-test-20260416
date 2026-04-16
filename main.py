@@ -526,6 +526,8 @@ class GenerateFromTemplateRequest(BaseModel):
     daily_stats_base64: Optional[str] = None
     chinese_data: Optional[str] = None
     english_data: Optional[str] = None
+    cn_template_base64: Optional[str] = None
+    en_template_base64: Optional[str] = None
 
 class UpdateDateWeatherRequest(BaseModel):
     document_base64: str
@@ -562,10 +564,16 @@ async def health():
 @app.post("/generate-from-template")
 async def generate_from_template(req: GenerateFromTemplateRequest):
     try:
-        if not os.path.exists(CN_TEMPLATE_PATH):
-            raise FileNotFoundError("找不到中文模板文件：templates/cn-template.docx")
-        if not os.path.exists(EN_TEMPLATE_PATH):
-            raise FileNotFoundError("找不到英文模板文件：templates/en-template.docx")
+        def load_template_doc(template_b64: Optional[str], fallback_path: str, label: str) -> Document:
+            if template_b64:
+                try:
+                    raw = base64.b64decode(template_b64)
+                    return Document(io.BytesIO(raw))
+                except Exception as exc:
+                    raise ValueError(f"{label}_template_base64 解析失败，请传入有效的 docx Base64") from exc
+            if os.path.exists(fallback_path):
+                return Document(fallback_path)
+            raise FileNotFoundError(f"未提供 {label}_template_base64，且找不到本地模板文件：{fallback_path}")
 
         cn_items = parse_daily_stats_from_base64(req.daily_stats_base64 or "")
         if cn_items is None:
@@ -585,12 +593,12 @@ async def generate_from_template(req: GenerateFromTemplateRequest):
         if en_items is None:
             en_items = cn_items
 
-        cn_doc = Document(CN_TEMPLATE_PATH)
+        cn_doc = load_template_doc(req.cn_template_base64, CN_TEMPLATE_PATH, "cn")
         render_daily_stats_table(cn_doc, cn_items)
         cn_out = io.BytesIO()
         cn_doc.save(cn_out)
 
-        en_doc = Document(EN_TEMPLATE_PATH)
+        en_doc = load_template_doc(req.en_template_base64, EN_TEMPLATE_PATH, "en")
         render_daily_stats_table(en_doc, en_items)
         en_out = io.BytesIO()
         en_doc.save(en_out)
