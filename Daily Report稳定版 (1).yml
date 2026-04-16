@@ -908,7 +908,7 @@ workflow:
           max_write_timeout: 0
         title: 调用word服务
         type: http-request
-        url: https://word-service-qsb9.onrender.com/generate-from-template
+        url: https://word-service-test-887541.zeabur.app/generate-from-template
         variables: []
       height: 153
       id: '1765792506427'
