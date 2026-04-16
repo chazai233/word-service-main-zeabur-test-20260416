@@ -1,0 +1,1488 @@
+app:
+  description: 将杂乱的施工日报整理成表格
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: Daily Report稳定版
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: bowenliang123/base64_codec:1.0.1@034fdfa9602a2b207c0009adecb8998344dbb4f74a223c88680b477c83ee783b
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.7.20@de0063a630a6d1b2c025fb84f3462ba5151fb60618309cd595c3f4711b1df847
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: code
+      id: 1765618258568-source-1765618418903-target
+      selected: false
+      source: '1765618258568'
+      sourceHandle: source
+      target: '1765618418903'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: code
+      id: 1765618418903-source-1765618453034-target
+      selected: false
+      source: '1765618418903'
+      sourceHandle: source
+      target: '1765618453034'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: 1765618047622-source-1765633277009-target
+      selected: false
+      source: '1765618047622'
+      sourceHandle: source
+      target: '1765633277009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1765634699134-source-1765634813793-target
+      selected: false
+      source: '1765634699134'
+      sourceHandle: source
+      target: '1765634813793'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: 1765620592389-source-1765792506427-target
+      selected: false
+      source: '1765620592389'
+      sourceHandle: source
+      target: '1765792506427'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: 1765792506427-source-1765792828440-target
+      selected: false
+      source: '1765792506427'
+      sourceHandle: source
+      target: '1765792828440'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: tool
+      id: 1765792828440-source-1765621792613-target
+      selected: false
+      source: '1765792828440'
+      sourceHandle: source
+      target: '1765621792613'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: tool
+      id: 1765792828440-source-17656309556920-target
+      selected: false
+      source: '1765792828440'
+      sourceHandle: source
+      target: '17656309556920'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 1765621792613-source-1765793282277-target
+      source: '1765621792613'
+      sourceHandle: source
+      target: '1765793282277'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 17656309556920-source-1765793282277-target
+      source: '17656309556920'
+      sourceHandle: source
+      target: '1765793282277'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: code
+      id: 1765633277009-false-1765794486421-target
+      source: '1765633277009'
+      sourceHandle: 'false'
+      target: '1765794486421'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: code
+      id: 1765618453034-source-1765798597797-target
+      source: '1765618453034'
+      sourceHandle: source
+      target: '1765798597797'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1765798597797-source-1765946126395-target
+      source: '1765798597797'
+      sourceHandle: source
+      target: '1765946126395'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: 1765946126395-source-1765620592389-target
+      source: '1765946126395'
+      sourceHandle: source
+      target: '1765620592389'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: 1765633277009-true-llm-target
+      source: '1765633277009'
+      sourceHandle: 'true'
+      target: llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm-source-1765618258568-target
+      source: llm
+      sourceHandle: source
+      target: '1765618258568'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1765794486421-source-1765634699134-target
+      source: '1765794486421'
+      sourceHandle: source
+      target: '1765634699134'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: 用户输入的日报文本
+          max_length: 8000
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: daily_report
+      height: 109
+      id: '1765618047622'
+      position:
+        x: -407.11511442235553
+        y: 360.08609066545097
+      positionAbsolute:
+        x: -407.11511442235553
+        y: 360.08609066545097
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            media_resolution: Low
+            temperature: 1
+            thinking_level: Medium
+          mode: chat
+          name: gemini-3-flash-preview
+          provider: langgenius/gemini/google
+        prompt_config:
+          jinja2_variables: []
+        prompt_template:
+        - edition_type: basic
+          id: e3bb16e0-8bee-447c-a406-e4a3be6bdcf4
+          role: system
+          text: 你是一个专业的施工日报解析助手，负责从杂乱的日报文本中提取结构化施工信息。
+        - edition_type: basic
+          id: 7677d9cd-f100-4173-b11d-58ae6f67203a
+          role: user
+          text: "请从以下施工日报中提取当日施工信息。\n\n## 提取规则：\n1. **提取当日或前一日完成和夜班完成的施工内容**\n2. **每个施工活动单独一行**，不要合并多个活动到一行\n\
+            3. **必须忽略以下内容**：\n   - 设备名称（挖机、自卸车、装载机等）\n   - 人员配置（普工、驾驶员等）\n   - 累计工作量\n\
+            \   - 盲沟相关内容\n4. 施工部位必须映射到以下标准名称之一：\n   - 右岸道路\n   - 炸药库\n   - 右岸砂石骨料加工系统\n\
+            \   - 右岸临时120拌合站\n   - 右岸拌合系统\n   - 右岸坝肩\n   - 右岸基坑（包含引航道区域）\n   -右岸1#弃渣场\n\
+            \    -右岸2#弃渣场\n    -右岸制砖厂兼钢筋加工厂\n    -左岸2#弃渣场\n    -左岸EPC营地\n- **如果无法匹配，保留原始施工部位名称**\n\
+            5. 施工内容要简洁，保留高程信息如\"(EL.480)\"\n6. 班次信息放入shift字段，可以是\"白班\"、\"夜班\"或空\n\
+            7. 日完成量使用标准格式：数字+单位（如40m、5500m³、1项、48个）\n8. 忽略标注为\"未开工\"或\"未施工\"的项目\n\n\
+            ## 输出格式（严格JSON数组）：\n[\n  {\n    \"location\": \"施工部位（8选1）\",\n    \"content\"\
+            : \"施工内容（简洁，可含高程）\",\n    \"quantity\": \"日完成量\",\n    \"shift\": \"白班/夜班/空\"\
+            \n  }\n]\n\n## 示例：\n[\n  {\"location\": \"右岸道路\", \"content\": \"砂石系统至采石场道路路面整平及路堤修筑(EL.611m)\"\
+            , \"quantity\": \"40m\", \"shift\": \"\"},\n  {\"location\": \"右岸道路\"\
+            , \"content\": \"洒水控制扬尘\", \"quantity\": \"1项\", \"shift\": \"\"},\n \
+            \ {\"location\": \"炸药库\", \"content\": \"硝铵炸药库房脚手架拼接\", \"quantity\":\
+            \ \"1项\", \"shift\": \"\"},\n  {\"location\": \"右岸砂石骨料加工系统\", \"content\"\
+            : \"筛分/破碎车间及制砂调节料堆石方开挖(EL.480)\", \"quantity\": \"5500m³\", \"shift\"\
+            : \"夜班\"},\n  {\"location\": \"右岸坝肩\", \"content\": \"坝肩边坡清表\", \"quantity\"\
+            : \"300m²\", \"shift\": \"\"},\n  {\"location\": \"22kV线路\", \"content\"\
+            : \"(无施工记录)\", \"quantity\": \"—\", \"shift\": \"\"}\n]\n\n## 用户日报：\n\
+            {{#1765618047622.daily_report#}}"
+        selected: false
+        title: 日报解析
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: llm
+      position:
+        x: -118.28978200093643
+        y: 381.08609066545097
+      positionAbsolute:
+        x: -118.28978200093643
+        y: 381.08609066545097
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\nimport re\n\ndef main(llm_output: str) -> dict:\n    \"\
+          \"\"验证并规范化LLM输出\"\"\"\n    \n    if isinstance(llm_output, dict):\n    \
+          \    llm_output = json.dumps(llm_output, ensure_ascii=False)\n    \n   \
+          \ try:\n        data = json.loads(llm_output)\n    except:\n        match\
+          \ = re.search(r'\\[[\\s\\S]*\\]', str(llm_output))\n        if match:\n\
+          \            try:\n                data = json.loads(match.group())\n  \
+          \          except:\n                return {\"data\": \"[]\", \"count\"\
+          : 0}\n        else:\n            return {\"data\": \"[]\", \"count\": 0}\n\
+          \    \n    if not isinstance(data, list):\n        return {\"data\": \"\
+          []\", \"count\": 0}\n    \n    validated = []\n    for item in data:\n \
+          \       if not isinstance(item, dict):\n            continue\n        \n\
+          \        location = str(item.get(\"location\", \"\")).strip()\n        content\
+          \ = str(item.get(\"content\", \"\")).strip()\n        \n        if not location\
+          \ or not content:\n            continue\n        if \"盲沟\" in content:\n\
+          \            continue\n        \n        validated.append({\n          \
+          \  \"location\": location,\n            \"content\": content,\n        \
+          \    \"quantity\": str(item.get(\"quantity\", \"\")).strip() or \"—\",\n\
+          \            \"shift\": str(item.get(\"shift\", \"\")).strip()\n       \
+          \ })\n    \n    return {\"data\": json.dumps(validated, ensure_ascii=False),\
+          \ \"count\": len(validated)}"
+        code_language: python3
+        outputs:
+          count:
+            children: null
+            type: number
+          data:
+            children: null
+            type: string
+        selected: false
+        title: Code验证
+        type: code
+        variables:
+        - value_selector:
+          - llm
+          - text
+          value_type: string
+          variable: llm_output
+      height: 52
+      id: '1765618258568'
+      position:
+        x: -118.28978200093643
+        y: 475.54287334428625
+      positionAbsolute:
+        x: -118.28978200093643
+        y: 475.54287334428625
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(validated_data: str) -> dict:\n    \"\"\"按8个施工部位固定顺序排序\"\
+          \"\"\n    \n    try:\n        data = json.loads(validated_data)\n    except:\n\
+          \        data = []\n    \n    if not isinstance(data, list):\n        data\
+          \ = []\n    \n    LOCATIONS = [\n        (\"右岸道路\", \"Right Bank Roads\"\
+          ),\n        (\"炸药库\", \"Explosives Magazine\"),\n        (\"右岸砂石骨料加工系统\"\
+          , \"Right Bank Aggregate System\"),\n        (\"右岸临时120拌合站\", \"Right Bank\
+          \ Temporary Batching Plant 120(m&sup3/h)\"),\n        (\"右岸拌合系统\", \"Right\
+          \ Bank Batching System\"),\n        (\"R10至2#弃渣场道路\", \"R10 Road to 2# Spoil\
+          \ Area\"),\n        (\"右岸坝肩\", \"Right Bank Abutment\"),\n        (\"22kV线路\"\
+          , \"22kV Transmission Line\")\n    ]\n    \n    LOC_ORDER = {loc[0]: i for\
+          \ i, loc in enumerate(LOCATIONS)}\n    LOC_EN = {loc[0]: loc[1] for loc\
+          \ in LOCATIONS}\n    \n    def normalize(loc):\n        loc = loc.strip()\n\
+          \        for std in LOC_ORDER.keys():\n            if std in loc or loc\
+          \ in std:\n                return std\n        mappings = {\n          \
+          \  \"砂石系统\": \"右岸砂石骨料加工系统\",\n            \"骨料系统\": \"右岸砂石骨料加工系统\",\n  \
+          \          \"120拌合站\": \"右岸临时120拌合站\",\n            \"拌合站\": \"右岸临时120拌合站\"\
+          ,\n            \"弃渣场\": \"R10至2#弃渣场道路\",\n            \"坝肩\": \"右岸坝肩\",\n\
+          \            \"22kV\": \"22kV线路\"\n        }\n        for k, v in mappings.items():\n\
+          \            if k in loc:\n                return v\n        return loc\n\
+          \    \n    for item in data:\n        item[\"location\"] = normalize(item[\"\
+          location\"])\n    \n    sorted_data = sorted(data, key=lambda x: LOC_ORDER.get(x[\"\
+          location\"], 99))\n    \n    result = []\n    current_loc = None\n    seq\
+          \ = 0\n    \n    for item in sorted_data:\n        if item[\"location\"\
+          ] != current_loc:\n            seq += 1\n            current_loc = item[\"\
+          location\"]\n        \n        result.append({\n            \"seq\": seq,\n\
+          \            \"location\": item[\"location\"],\n            \"location_en\"\
+          : LOC_EN.get(item[\"location\"], item[\"location\"]),\n            \"content\"\
+          : item[\"content\"],\n            \"quantity\": item[\"quantity\"],\n  \
+          \          \"shift\": item[\"shift\"]\n        })\n    \n    return {\"\
+          sorted_data\": json.dumps(result, ensure_ascii=False), \"count\": len(result)}"
+        code_language: python3
+        outputs:
+          count:
+            children: null
+            type: number
+          sorted_data:
+            children: null
+            type: string
+        selected: false
+        title: Code排序
+        type: code
+        variables:
+        - value_selector:
+          - '1765618258568'
+          - data
+          value_type: string
+          variable: validated_data
+      height: 52
+      id: '1765618418903'
+      position:
+        x: -118.28978200093643
+        y: 532.0400417115709
+      positionAbsolute:
+        x: -118.28978200093643
+        y: 532.0400417115709
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\ndef main(sorted_data: str) -> dict:\n    \"\"\"准备数据供 Word\
+          \ 服务使用\"\"\"\n    \n    if not sorted_data or sorted_data == \"null\":\n\
+          \        data = []\n    else:\n        try:\n            data = json.loads(sorted_data)\n\
+          \        except:\n            data = []\n    \n    return {\n        \"\
+          chinese_data\": sorted_data if sorted_data else \"[]\",\n        \"data_for_translation\"\
+          : sorted_data if sorted_data else \"[]\"\n    }"
+        code_language: python3
+        outputs:
+          chinese_data:
+            children: null
+            type: string
+          data_for_translation:
+            children: null
+            type: string
+        selected: false
+        title: Code中文表格
+        type: code
+        variables:
+        - value_selector:
+          - '1765618418903'
+          - sorted_data
+          value_type: string
+          variable: sorted_data
+      height: 52
+      id: '1765618453034'
+      position:
+        x: -118.28978200093643
+        y: 593.5952863399018
+      positionAbsolute:
+        x: -118.28978200093643
+        y: 593.5952863399018
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\nimport base64\ndef main(sorted_data: str, translation_output: str) -> dict:\n    \"\"\"???? Word ????????daily_stats_base64?\"\"\"\n    try:\n        data = json.loads(sorted_data) if sorted_data else []\n    except Exception:\n        data = []\n\n    if not isinstance(data, list):\n        data = []\n\n    daily_stats = []\n    for item in data:\n        if not isinstance(item, dict):\n            continue\n        daily_stats.append({\n            \"seq\": str(item.get(\"seq\", \"\")).strip(),\n            \"location\": str(item.get(\"location\", \"\")).strip(),\n            \"content\": str(item.get(\"content\", \"\")).strip(),\n            \"quantity\": str(item.get(\"quantity\", \"\")).strip(),\n            \"remarks\": str(item.get(\"shift\", \"\")).strip()\n        })\n\n    daily_stats_json = json.dumps(daily_stats, ensure_ascii=False)\n    daily_stats_b64 = base64.b64encode(daily_stats_json.encode(\"utf-8\")).decode(\"utf-8\")\n    text = str(translation_output) if translation_output is not None else \"\"\n\n    # ???????????????? daily_stats_base64\n    return {\n        \"request_body\": json.dumps({\n            \"daily_stats_base64\": daily_stats_b64,\n            \"chinese_data\": sorted_data if sorted_data else \"[]\",\n            \"english_data\": text\n        }, ensure_ascii=False)\n    }"
+        code_language: python3
+        outputs:
+          request_body:
+            children: null
+            type: string
+        selected: false
+        title: Code生成英文表格
+        type: code
+        variables:
+        - value_selector:
+          - '1765618453034'
+          - chinese_data
+          value_type: string
+          variable: sorted_data
+        - value_selector:
+          - '1765946126395'
+          - text
+          value_type: string
+          variable: translation_output
+      height: 52
+      id: '1765620592389'
+      position:
+        x: 156.10497076985683
+        y: 381.08609066545097
+      positionAbsolute:
+        x: 156.10497076985683
+        y: 381.08609066545097
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Base64 encoded text of the file(s), multiple output files are supported
+              when using the delimiter
+            ja_JP: Base64 encoded text of the file(s), multiple output files are supported
+              when using the delimiter
+            pt_BR: Base64 encoded text of the file(s), multiple output files are supported
+              when using the delimiter
+            zh_Hans: Base64 编码的文件字符串, 支持使用分隔符分割多个文件
+          label:
+            en_US: Base64 encoded Text
+            ja_JP: Base64 encoded Text
+            pt_BR: Base64 encoded Text
+            zh_Hans: Base64 编码的文件字符串
+          llm_description: A tool for decoding Base64-encoded text to file file
+          max: null
+          min: null
+          name: encoded_text
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Optional output filename(s), one per line.
+            ja_JP: Optional output filename(s), one per line.
+            pt_BR: Optional output filename(s), one per line.
+            zh_Hans: 每行一个，非必填。
+          label:
+            en_US: Output file name(s)
+            ja_JP: Output file name(s)
+            pt_BR: Output file name(s)
+            zh_Hans: 输出文件名
+          llm_description: ''
+          max: null
+          min: null
+          name: output_filename
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: '
+
+
+            '
+          form: llm
+          human_description:
+            en_US: Support multiple segments of Base64 encoded text, split by the
+              delimiter and decode them into multiple files sequentially
+            ja_JP: Support multiple segments of Base64 encoded text, split by the
+              delimiter and decode them into multiple files sequentially
+            pt_BR: Support multiple segments of Base64 encoded text, split by the
+              delimiter and decode them into multiple files sequentially
+            zh_Hans: 支持多段Base64编码文本，按分隔符拆分后依次解码为多个文件
+          label:
+            en_US: Delimiter
+            ja_JP: Delimiter
+            pt_BR: Delimiter
+            zh_Hans: 分隔符
+          llm_description: A tool for decoding Base64-encoded text to file file
+          max: null
+          min: null
+          name: splitter_str
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        params:
+          encoded_text: ''
+          output_filename: ''
+          splitter_str: ''
+        plugin_id: bowenliang123/base64_codec
+        plugin_unique_identifier: bowenliang123/base64_codec:1.0.1@034fdfa9602a2b207c0009adecb8998344dbb4f74a223c88680b477c83ee783b
+        provider_icon: /console/api/workspaces/current/plugin/icon?tenant_id=924438c6-4520-4526-ac50-7d0360fb58a1&filename=cebbda2083c25c484bb939ab05f656c605dfabd2f0ca9c42f767737052b4977a.png
+        provider_id: bowenliang123/base64_codec/base64_codec
+        provider_name: bowenliang123/base64_codec/base64_codec
+        provider_type: builtin
+        selected: false
+        title: 施工日报CN
+        tool_configurations: {}
+        tool_description: 将 Base64 编码文本转为 二进制文件
+        tool_label: Base64 ⮕ 文件
+        tool_name: base64_file_decoder
+        tool_node_version: '2'
+        tool_parameters:
+          encoded_text:
+            type: mixed
+            value: '{{#1765792828440.cn_base64#}}'
+          output_filename:
+            type: mixed
+            value: 施工日报CN.docx
+          splitter_str:
+            type: mixed
+            value: ' '
+        type: tool
+      height: 52
+      id: '1765621792613'
+      position:
+        x: 424.89119513041095
+        y: 381.08609066545097
+      positionAbsolute:
+        x: 424.89119513041095
+        y: 381.08609066545097
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Base64 encoded text of the file(s), multiple output files are supported
+              when using the delimiter
+            ja_JP: Base64 encoded text of the file(s), multiple output files are supported
+              when using the delimiter
+            pt_BR: Base64 encoded text of the file(s), multiple output files are supported
+              when using the delimiter
+            zh_Hans: Base64 编码的文件字符串, 支持使用分隔符分割多个文件
+          label:
+            en_US: Base64 encoded Text
+            ja_JP: Base64 encoded Text
+            pt_BR: Base64 encoded Text
+            zh_Hans: Base64 编码的文件字符串
+          llm_description: A tool for decoding Base64-encoded text to file file
+          max: null
+          min: null
+          name: encoded_text
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Optional output filename(s), one per line.
+            ja_JP: Optional output filename(s), one per line.
+            pt_BR: Optional output filename(s), one per line.
+            zh_Hans: 每行一个，非必填。
+          label:
+            en_US: Output file name(s)
+            ja_JP: Output file name(s)
+            pt_BR: Output file name(s)
+            zh_Hans: 输出文件名
+          llm_description: ''
+          max: null
+          min: null
+          name: output_filename
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: '
+
+
+            '
+          form: llm
+          human_description:
+            en_US: Support multiple segments of Base64 encoded text, split by the
+              delimiter and decode them into multiple files sequentially
+            ja_JP: Support multiple segments of Base64 encoded text, split by the
+              delimiter and decode them into multiple files sequentially
+            pt_BR: Support multiple segments of Base64 encoded text, split by the
+              delimiter and decode them into multiple files sequentially
+            zh_Hans: 支持多段Base64编码文本，按分隔符拆分后依次解码为多个文件
+          label:
+            en_US: Delimiter
+            ja_JP: Delimiter
+            pt_BR: Delimiter
+            zh_Hans: 分隔符
+          llm_description: A tool for decoding Base64-encoded text to file file
+          max: null
+          min: null
+          name: splitter_str
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        params:
+          encoded_text: ''
+          output_filename: ''
+          splitter_str: ''
+        plugin_id: bowenliang123/base64_codec
+        plugin_unique_identifier: bowenliang123/base64_codec:1.0.1@034fdfa9602a2b207c0009adecb8998344dbb4f74a223c88680b477c83ee783b
+        provider_icon: /console/api/workspaces/current/plugin/icon?tenant_id=924438c6-4520-4526-ac50-7d0360fb58a1&filename=cebbda2083c25c484bb939ab05f656c605dfabd2f0ca9c42f767737052b4977a.png
+        provider_id: bowenliang123/base64_codec/base64_codec
+        provider_name: bowenliang123/base64_codec/base64_codec
+        provider_type: builtin
+        selected: false
+        title: 施工日报EN
+        tool_configurations: {}
+        tool_description: 将 Base64 编码文本转为 二进制文件
+        tool_label: Base64 ⮕ 文件
+        tool_name: base64_file_decoder
+        tool_node_version: '2'
+        tool_parameters:
+          encoded_text:
+            type: mixed
+            value: '{{#1765792828440.en_base64#}}'
+          output_filename:
+            type: mixed
+            value: 施工日报EN.docx
+          splitter_str:
+            type: mixed
+            value: ' '
+        type: tool
+      height: 52
+      id: '17656309556920'
+      position:
+        x: 424.89119513041095
+        y: 441.8059054614123
+      positionAbsolute:
+        x: 424.89119513041095
+        y: 441.8059054614123
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: contains
+            id: 9e6e7b30-8664-46bc-a32b-c2889353ef1e
+            value: 整理
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          id: 'true'
+          logical_operator: and
+        selected: false
+        title: 条件分支
+        type: if-else
+      height: 124
+      id: '1765633277009'
+      position:
+        x: -407.11511442235553
+        y: 475.54287334428625
+      positionAbsolute:
+        x: -407.11511442235553
+        y: 475.54287334428625
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking_mode: false
+          mode: chat
+          name: gemini-2.5-flash
+          provider: langgenius/gemini/google
+        prompt_template:
+        - id: e21f1a10-0ad8-4cfb-9d60-343b331bbf46
+          role: system
+          text: "你是专业的水电工程翻译专家，负责将中文施工内容翻译成准确的英文。\n\n翻译原则:\n1. 严格使用提供的术语对照表中的标准翻译\n\
+            2. 保持工程术语的专业性和一致性\n3. 保留高程信息如 (EL.611m)\n4. 数字和单位使用国际标准 (m³, m², m, t)\n\
+            5. 翻译要符合工程报告的正式语体\n\n## 重要句式规则 (必须遵守):\n\n1. 【施工活动 + 地点】句式:\n   - ❌ 错误:\
+            \ \"Right Bank Electric Pole Foundation Pit Excavation\"\n   - ✅ 正确: \"\
+            Excavation of electric pole foundation pits on the right bank\"\n   -\
+            \ 规则: 使用 \"[动名词] of [对象] on/at/in [地点]\" 结构\n\n2. 【地点A至B + 施工活动】句式:\n\
+            \   - 中文: \"砂石系统至采石场道路路面整平\"\n   - ✅ 正确: \"Road surface grading of the\
+            \ road from Aggregate System to Quarry\"\n\n3. 【设施/部位 + 施工活动】句式:\n   -\
+            \ 中文: \"水泥电杆侧拉线安装\"\n   - ✅ 正确: \"Installation of side stay wires for\
+            \ concrete power poles\"\n   - 规则: 使用 \"[动名词] of [对象] for/of [设施]\" 结构\n\
+            \n4. 【地点 + 设施 + 施工活动】句式:\n   - 中文: \"右岸22KV跨河水泥电杆侧拉线安装\"\n   - ✅ 正确: \"\
+            Installation of side stay wires for 22kV river-crossing concrete power\
+            \ poles on the right bank\"\n\n## 翻译风格要点:\n- 优先使用动名词开头 (Excavation, Installation,\
+            \ Construction...)\n- 使用介词短语表达位置关系 (on the right bank, at EL.480m, from\
+            \ A to B)\n- 避免名词堆叠 (noun stacking)\n- 保持句子流畅可读\n\n## 大写规则 (Title Case):\n\
+            - 每个实词（名词、动词、形容词、副词）首字母大写\n- 小词（of, on, at, in, for, the, a, to, from）保持小写，除非在句首\n\
+            - 示例: \"Excavation of Electric Pole Foundation Pits on the Right Bank\"\
+            \n- 示例: \"Installation of Side Stay Wires for Concrete Power Poles\""
+        - id: a81bab6c-9fd7-41be-a7f2-b7e84054a14e
+          role: user
+          text: '请将以下中文施工内容翻译成英文。
+
+
+            ## 原文:
+
+            {{#1765618047622.daily_report#}}
+
+
+            ## 术语对照表:
+
+            {{#1765794486421.formatted#}}
+
+
+            ## 翻译要求:
+
+            1. 必须使用术语表中的标准英文翻译
+
+            2. 严格遵守系统提示中的句式规则
+
+            3. 使用 "动名词 + of + 对象 + 介词短语(位置)" 的句式结构
+
+            4. 避免名词堆叠，保持句子流畅
+
+            5. 只输出翻译结果，不要解释
+
+
+            ## 示例参考:
+
+            - 右岸电杆基坑开挖 → Excavation of Electric Pole Foundation Pits on the Right
+            Bank
+
+            - 水泥电杆侧拉线安装 → Installation of Side Stay Wires for Concrete Power Poles
+
+            - 砂石系统至采石场道路碾压 → Compaction of the Road from Aggregate System to Quarry'
+        selected: false
+        title: 术语翻译
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1765634699134'
+      position:
+        x: -407.11511442235553
+        y: 670.7995212529557
+      positionAbsolute:
+        x: -407.11511442235553
+        y: 670.7995212529557
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#1765634699134.text#}}'
+        selected: false
+        title: 输出翻译结果
+        type: answer
+        variables: []
+      height: 103
+      id: '1765634813793'
+      position:
+        x: -407.11511442235553
+        y: 766.6617118492806
+      positionAbsolute:
+        x: -407.11511442235553
+        y: 766.6617118492806
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-215
+            key: ''
+            type: text
+            value: '{{#1765620592389.request_body#}}'
+          type: json
+        headers: Content-Type:application/json
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: true
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: 调用word服务
+        type: http-request
+        url: https://word-service-qsb9.onrender.com/generate-from-template
+        variables: []
+      height: 153
+      id: '1765792506427'
+      position:
+        x: 156.10497076985683
+        y: 441.8059054614123
+      positionAbsolute:
+        x: 156.10497076985683
+        y: 441.8059054614123
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\nimport base64\n\ndef main(http_response: str) -> dict:\n\
+          \    \"\"\"处理 Word 服务响应\"\"\"\n    try:\n        result = json.loads(http_response)\n\
+          \        \n        if result.get(\"success\"):\n            return {\n \
+          \               \"cn_base64\": result.get(\"cn_document_base64\", \"\"),\n\
+          \                \"en_base64\": result.get(\"en_document_base64\", \"\"\
+          ),\n                \"weather_info\": f\"日期: {result.get('weather_info',\
+          \ {}).get('date', '')} | 天气: {result.get('weather_info', {}).get('weather',\
+          \ '')} {result.get('weather_info', {}).get('temp', '')}\",\n           \
+          \     \"success\": \"true\"\n            }\n        else:\n            return\
+          \ {\n                \"cn_base64\": \"\",\n                \"en_base64\"\
+          : \"\",\n                \"weather_info\": \"生成失败\",\n                \"\
+          success\": \"false\"\n            }\n    except Exception as e:\n      \
+          \  return {\n            \"cn_base64\": \"\",\n            \"en_base64\"\
+          : \"\",\n            \"weather_info\": f\"错误: {str(e)}\",\n            \"\
+          success\": \"false\"\n        }"
+        code_language: python3
+        outputs:
+          cn_base64:
+            children: null
+            type: string
+          en_base64:
+            children: null
+            type: string
+          success:
+            children: null
+            type: string
+          weather_info:
+            children: null
+            type: string
+        selected: false
+        title: 处理word服务响应
+        type: code
+        variables:
+        - value_selector:
+          - '1765792506427'
+          - body
+          value_type: string
+          variable: http_response
+      height: 52
+      id: '1765792828440'
+      position:
+        x: 156.10497076985683
+        y: 600.5266268014179
+      positionAbsolute:
+        x: 156.10497076985683
+        y: 600.5266268014179
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#1765792828440.weather_info#}}
+
+          {{#1765621792613.files#}}
+
+          {{#17656309556920.files#}}'
+        selected: false
+        title: 回复昨日天气与word文件
+        type: answer
+        variables: []
+      height: 140
+      id: '1765793282277'
+      position:
+        x: 424.89119513041095
+        y: 501.906451857296
+      positionAbsolute:
+        x: 424.89119513041095
+        y: 501.906451857296
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(query: str) -> dict:\n    \"\"\"从输入句子中提取匹配的术语\
+          \ - 改进版\"\"\"\n    \n    # 完整术语表 (扩展版 - 新增电力工程相关术语)\n    GLOSSARY = {\n\
+          \        # 项目与位置\n        \"北本水电站\": \"Pak Beng Hydropower Project\",\n\
+          \        \"右岸道路\": \"Right Bank Road\",\n        \"R10道路\": \"R10 Road\"\
+          ,\n        \"右岸沿线道路\": \"Roads along the right bank\",\n        \"右岸坝肩\"\
+          : \"Right Bank Abutment\",\n        \"砂石骨料加工系统\": \"Right Bank Aggregate\
+          \ Plant\",\n        \"砂石系统\": \"Aggregate System\",\n        \"采石场\": \"\
+          Right Bank Quarry\",\n        \"2#弃渣场\": \"2# Spoil Area\",\n        \"\
+          1#弃渣场\": \"1# Spoil Area\",\n        \"炸药库\": \"Explosives Magazine\",\n\
+          \        \"硝铵炸药库房\": \"Ammonium Nitrate Magazine\",\n        \"乳化炸药库房\"\
+          : \"Emulsion Explosives Magazine\",\n        \"雷管库房\": \"Detonator Magazine\"\
+          ,\n        \"右岸临时120拌合站\": \"Right Bank Temporary Batching Plant 120 (m³/h)\"\
+          ,\n        \"右岸拌合系统\": \"Right Bank Batching System\",\n        \"混凝土系统\"\
+          : \"Concrete Batching System\",\n        \"预制梁场\": \"Precasting Yard\",\n\
+          \        \"制砖厂\": \"Brick Plant\",\n        \"钢筋加工厂\": \"Reinforcement Plant\"\
+          ,\n        \"观景台\": \"Viewing Platform\",\n        \"卸料平台\": \"Discharge\
+          \ Platform\",\n        \"受料平台\": \"Receiving Platform\",\n        \"控制室\"\
+          : \"Control Room\",\n        \"发电机房\": \"Generator Room\",\n        \"地磅\"\
+          : \"Weighbridge\",\n        \"施工营地\": \"Construction Camp\",\n        \"\
+          右岸\": \"Right Bank\",\n        \n        # 道路相关\n        \"道路路面整平\": \"\
+          Road Surface Grading\",\n        \"路面整平\": \"Road Surface Grading\",\n \
+          \       \"道路平整\": \"Road Grading\",\n        \"道路碾压\": \"Road Compaction\"\
+          ,\n        \"路堤塑型\": \"Embankment Plasticity Treatment\",\n        \"日常道路维护\"\
+          : \"Routine Road Maintenance\",\n        \"道路扩挖\": \"Road Widening\",\n\
+          \        \"道路回填\": \"Road Backfill\",\n        \"毛路开挖\": \"Rough Road Excavation\"\
+          ,\n        \"砂石系统至采石场道路\": \"Road from Aggregate System to Right Bank Quarry\"\
+          ,\n        \n        # 土石方工程\n        \"清表\": \"Clearing and Grubbing\"\
+          ,\n        \"植被清理\": \"Vegetation Clearing\",\n        \"原地面毛路清表\": \"Site\
+          \ Clearing for Haul Road on Original Ground\",\n        \"土方开挖\": \"Earth\
+          \ Excavation\",\n        \"石方开挖\": \"Rock Excavation\",\n        \"爆破钻孔\"\
+          : \"Blast Hole Drilling\",\n        \"土方回填\": \"Earth Backfill\",\n    \
+          \    \"换基块石回填\": \"Foundation Replacement with Rock Backfill\",\n      \
+          \  \"边坡修坡\": \"Slope Cutting for Stabilization\",\n        \"边坡修理\": \"\
+          Slope Remediation\",\n        \"坡度控制\": \"Slope Control\",\n        \"坡度调整\"\
+          : \"Slope Adjustment\",\n        \"挡坎修筑\": \"Construction of Retaining Berm\"\
+          ,\n        \"挡坎加固\": \"Reinforcement of Retaining Berms\",\n        \"路边挡土坎整修\"\
+          : \"Remediation of Retaining Berm\",\n        \"弃渣\": \"Spoil Disposal\"\
+          ,\n        \"基坑开挖\": \"Foundation Pit Excavation\",\n        \n        #\
+          \ 冲沟工程\n        \"冲沟清表\": \"Gully Clearing and Grubbing\",\n        \"冲沟回填\"\
+          : \"Gully Backfill\",\n        \"冲沟碾压\": \"Gully Compaction\",\n       \
+          \ \"冲沟钢管铺设\": \"Gully Steel Pipe Laying\",\n        \n        # 测量\n   \
+          \     \"试点测量\": \"Pilot Survey\",\n        \"测量放线\": \"Measurement and Staking\"\
+          ,\n        \"地形测量\": \"Topographic Survey\",\n        \"原始地形测量\": \"Terrain\
+          \ Survey of Original Topography\",\n        \n        # 建筑结构\n        \"\
+          主楼及操作室\": \"Main Tower and Control Room\",\n        \"粉料罐\": \"Powder Silo\"\
+          ,\n        \"骨料仓\": \"Aggregate Bin\",\n        \"配料机\": \"Batcher\",\n\
+          \        \"斜皮带机\": \"Inclined Belt Conveyor\",\n        \"传送带\": \"Belt\
+          \ Conveyor\",\n        \"分料机\": \"Material Distributor\",\n        \"挡土墙\"\
+          : \"Retaining Wall\",\n        \"围墙\": \"Perimeter Wall\",\n        \"基础柱子\"\
+          : \"Foundation Columns\",\n        \"地圈梁\": \"Foundation Beam\",\n     \
+          \   \"筏板基础\": \"Raft Foundation\",\n        \n        # 混凝土工程\n        \"\
+          垫层浇筑\": \"Pouring of Lean Concrete\",\n        \"混凝土浇筑\": \"Concrete Pouring\"\
+          ,\n        \"模板架设\": \"Formwork Erection\",\n        \"模板拼接\": \"Formwork\
+          \ Assembly\",\n        \"模板拆卸\": \"Formwork Dismantling\",\n        \"钢筋绑扎\"\
+          : \"Rebar Tying\",\n        \"钢筋加工\": \"Rebar Processing\",\n        \"\
+          钢筋棚搭设\": \"Erection of Rebar Shed\",\n        \"预埋件安装\": \"Installation\
+          \ of Embedded Parts\",\n        \"基础凿毛\": \"Scarification\",\n        \"\
+          施工缝凿毛\": \"Chipping at Construction Joints\",\n        \"基坑夯实\": \"Compaction\
+          \ of Foundation Pit\",\n        \"养护\": \"Curing\",\n        \n        #\
+          \ 锚固工程\n        \"自进式锚杆钻孔\": \"Self-Drilling Anchor Bolt Hole Drilling\"\
+          ,\n        \"砂浆锚杆\": \"Mortar Anchor Bolt\",\n        \"排水孔钻孔\": \"Drainage\
+          \ Hole Drilling\",\n        \"锚杆注浆\": \"Grouting of Rock Bolts\",\n    \
+          \    \"涵管安装\": \"Installation of Culvert Pipes\",\n        \"临时卸料平台\": \"\
+          Temporary Concrete Discharging Platform\",\n        \"脚手架拼接\": \"Scaffold\
+          \ Assembly\",\n        \"防水塑料膜铺设\": \"Laying of Waterproof Plastic Membrane\"\
+          ,\n        \n        # 电力工程 - 支持大小写变体\n        \"22kV线路\": \"22kV Line\"\
+          ,\n        \"22KV线路\": \"22kV Line\",\n        \"22kV\": \"22kV Line\",\n\
+          \        \"22KV\": \"22kV Line\",\n        \"左岸中心变电站\": \"Left Bank Central\
+          \ Substation\",\n        \"输电铁塔\": \"Transmission Tower\",\n        \"水泥电杆\"\
+          : \"Concrete Power Pole\",\n        \"电杆基础\": \"Pole Foundation\",\n   \
+          \     \"立杆作业\": \"Pole Erection\",\n        \"横担安装\": \"Cross-arm Installation\"\
+          ,\n        \"瓷瓶\": \"Insulator\",\n        \"导线安装\": \"Conductor Installation\"\
+          ,\n        \"架设线路\": \"Conductor Stringing\",\n        \"拉线安装\": \"Stay\
+          \ Wire Installation\",\n        \"侧拉线安装\": \"Side Stay Wire Installation\"\
+          ,\n        \"拉线基坑\": \"Stay Wire Foundation Pit\",\n        \"侧拉线基坑\": \"\
+          Side Stay Wire Foundation Pit\",\n        \"电杆迁移\": \"Relocation of Poles\"\
+          ,\n        \"电杆转运\": \"Transfer of Electric Poles\",\n        \"变配电室\":\
+          \ \"Power Distribution Room\",\n        \"线路走向查堪\": \"Survey of Line Alignment\"\
+          ,\n        \"技术交底\": \"Technical Disclosure\",\n        \"跨河\": \"River\
+          \ Crossing\",\n        \n        # 机械设备\n        \"反铲挖掘机\": \"Backhoe Excavator\"\
+          ,\n        \"装载机\": \"Loader\",\n        \"25t自卸汽车\": \"25t Dump Truck\"\
+          ,\n        \"推土机\": \"Bulldozer\",\n        \"压路机\": \"Road Roller\",\n\
+          \        \"平地机\": \"Motor Grader\",\n        \"洒水车\": \"Water Truck\",\n\
+          \        \"钻孔设备\": \"Drilling Rig\",\n        \"潜孔钻\": \"Down-the-hole (DTH)\
+          \ Drill\",\n        \"柴油空压机\": \"Diesel Air Compressor\",\n        \"无人机\"\
+          : \"UAV (Unmanned Aerial Vehicle)\",\n        \n        # 安全设施\n       \
+          \ \"警示标识牌\": \"Warning Signs\",\n        \"道路警示桩\": \"Warning Bollards\"\
+          ,\n        \"临边防护\": \"Edge Protection\",\n        \"防护栏\": \"Protective\
+          \ Railings\",\n        \"围挡\": \"Fencing\",\n        \"沉淀池\": \"Sediment\
+          \ Pond\",\n        \"施工用水池\": \"Construction Water Tank\",\n        \"移动厕所\"\
+          : \"Mobile Toilet\",\n        \n        # 状态\n        \"暂停施工\": \"Work Suspended\"\
+          ,\n        \"待命\": \"Standby\",\n        \"无安全隐患\": \"No safety hazards\"\
+          ,\n        \n        # 会议检查\n        \"HSE专题月例会\": \"Monthly HSE Subject\
+          \ Meeting\",\n        \"月度综合大检查\": \"Monthly Site Safety Inspection\",\n\
+          \        \n        # 其他\n        \"人工播草种\": \"Manual Grass Seeding\",\n\
+          \        \"洒水降尘\": \"Dust Suppression via Watering\",\n        \"洒水控制扬尘\"\
+          : \"Dust Suppression via Watering\",\n        \"筛分车间\": \"Screening Workshop\"\
+          ,\n        \"破碎车间\": \"Crushing Workshop\",\n        \"制砂\": \"Sand Making\"\
+          ,\n        \"调节料堆\": \"Regulating Stockpile\",\n        \"成品料仓\": \"Finished\
+          \ Product Bin\",\n        \"分叉\": \"Branch/Fork\"\n    }\n    \n    if not\
+          \ query:\n        return {\n            \"matched_terms\": \"[]\",\n   \
+          \         \"count\": 0,\n            \"formatted\": \"未输入查询内容\"\n      \
+          \  }\n    \n    matched = []\n    matched_chinese = set()\n    \n    # 按术语长度降序排序（优先匹配长术语）\n\
+          \    sorted_terms = sorted(GLOSSARY.keys(), key=len, reverse=True)\n   \
+          \ \n    for term in sorted_terms:\n        if term in query and term not\
+          \ in matched_chinese:\n            english = GLOSSARY[term]\n          \
+          \  # 避免重复添加相同英文翻译的术语\n            already_has = any(m['english'] == english\
+          \ for m in matched)\n            if not already_has:\n                matched.append({\n\
+          \                    \"chinese\": term,\n                    \"english\"\
+          : english\n                })\n                matched_chinese.add(term)\n\
+          \    \n    # 格式化输出\n    formatted_list = [f\"{m['chinese']} = {m['english']}\"\
+          \ for m in matched]\n    \n    return {\n        \"matched_terms\": json.dumps(matched,\
+          \ ensure_ascii=False),\n        \"count\": len(matched),\n        \"formatted\"\
+          : \"\\n\".join(formatted_list) if formatted_list else \"未找到匹配术语\"\n    }"
+        code_language: python3
+        outputs:
+          count:
+            children: null
+            type: number
+          formatted:
+            children: null
+            type: string
+          matched_terms:
+            children: null
+            type: string
+        selected: false
+        title: 术语匹配
+        type: code
+        variables:
+        - value_selector:
+          - '1765618047622'
+          - daily_report
+          value_type: string
+          variable: query
+      height: 52
+      id: '1765794486421'
+      position:
+        x: -407.11511442235553
+        y: 605.5592582017875
+      positionAbsolute:
+        x: -407.11511442235553
+        y: 605.5592582017875
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(data_for_translation: str) -> dict:\n    \"\
+          \"\"从待翻译数据中提取所有匹配的术语\"\"\"\n    \n    GLOSSARY = {\n        # 项目与施工部位\n\
+          \        \"北本水电站\": \"Pak Beng Hydropower Project\",\n        \"右岸道路\":\
+          \ \"Right Bank Roads\",\n        \"R10道路\": \"R10 Road\",\n        \"右岸沿线道路\"\
+          : \"Roads along the right bank\",\n        \"右岸坝肩\": \"Right Bank Abutment\"\
+          ,\n        \"砂石骨料加工系统\": \"Right Bank Aggregate Plant\",\n        \"右岸砂石骨料加工系统\"\
+          : \"Right Bank Aggregate System\",\n        \"砂石系统\": \"Aggregate System\"\
+          ,\n        \"采石场\": \"Right Bank Quarry\",\n        \"2#弃渣场\": \"2# Spoil\
+          \ Area\",\n        \"1#弃渣场\": \"1# Spoil Area\",\n        \"炸药库\": \"Explosives\
+          \ Magazine\",\n        \"硝铵炸药库房\": \"Ammonium Nitrate Magazine\",\n    \
+          \    \"乳化炸药库房\": \"Emulsion Explosives Magazine\",\n        \"雷管库房\": \"\
+          Detonator Magazine\",\n        \"右岸临时120拌合站\": \"Right Bank Temporary Batching\
+          \ Plant 120(m³/h)\",\n        \"右岸拌合系统\": \"Right Bank Batching System\"\
+          ,\n        \"R10至2#弃渣场道路\": \"R10 Road to 2# Spoil Area\",\n        \"22kV线路\"\
+          : \"22kV Line\",\n        \"混凝土系统\": \"Concrete Batching System\",\n   \
+          \     \"预制梁场\": \"Precasting Yard\",\n        \"制砖厂\": \"Brick Plant\",\n\
+          \        \"钢筋加工厂\": \"Reinforcement Plant\",\n        \"右岸引航道\": \"Right\
+          \ Bank Approach Channel\",\n        \n        \n        # 道路工程\n       \
+          \ \"道路路面整平\": \"Road Surface Grading\",\n        \"路面整平\": \"Road Surface\
+          \ Grading\",\n        \"道路平整\": \"Road Grading\",\n        \"道路碾压\": \"\
+          Road Compaction\",\n        \"路堤塑型\": \"Embankment Plasticity Treatment\"\
+          ,\n        \"日常道路维护\": \"Routine Road Maintenance\",\n        \"道路扩挖\":\
+          \ \"Road Widening\",\n        \"道路回填\": \"Road Backfill\",\n        \"毛路开挖\"\
+          : \"Rough Road Excavation\",\n        \"砂石系统至采石场道路\": \"Road from Aggregate\
+          \ System to Right Bank Quarry\",\n        \n        # 土石方工程\n        \"\
+          清表\": \"Clearing and Grubbing\",\n        \"植被清理\": \"Vegetation Clearing\"\
+          ,\n        \"原地面毛路清表\": \"Site Clearing for Haul Road on Original Ground\"\
+          ,\n        \"土方开挖\": \"Earth Excavation\",\n        \"石方开挖\": \"Rock Excavation\"\
+          ,\n        \"爆破钻孔\": \"Blast Hole Drilling\",\n        \"土方回填\": \"Earth\
+          \ Backfill\",\n        \"换基块石回填\": \"Foundation Replacement with Rock Backfill\"\
+          ,\n        \"边坡修坡\": \"Slope Cutting for Stabilization\",\n        \"边坡修理\"\
+          : \"Slope Remediation\",\n        \"坡度控制\": \"Slope Control\",\n       \
+          \ \"坡度调整\": \"Slope Adjustment\",\n        \"挡坎修筑\": \"Construction of Retaining\
+          \ Berm\",\n        \"挡坎加固\": \"Reinforcement of Retaining Berms\",\n   \
+          \     \"路边挡土坎整修\": \"Remediation of Retaining Berm\",\n        \"弃渣\": \"\
+          Spoil Disposal\",\n        \n        # 冲沟工程\n        \"冲沟清表\": \"Gully Clearing\
+          \ and Grubbing\",\n        \"冲沟回填\": \"Gully Backfill\",\n        \"冲沟碾压\"\
+          : \"Gully Compaction\",\n        \"冲沟钢管铺设\": \"Gully Steel Pipe Laying\"\
+          ,\n        \n        # 测量\n        \"试点测量\": \"Pilot Survey\",\n       \
+          \ \"测量放线\": \"Measurement and Staking\",\n        \"地形测量\": \"Topographic\
+          \ Survey\",\n        \"原始地形测量\": \"Terrain Survey of Original Topography\"\
+          ,\n        \n        # 建筑结构\n        \"主楼及操作室\": \"Main Tower and Control\
+          \ Room\",\n        \"观景台\": \"Viewing Platform\",\n        \"卸料平台\": \"\
+          Discharge Platform\",\n        \"受料平台\": \"Receiving Platform\",\n     \
+          \   \"控制室\": \"Control Room\",\n        \"发电机房\": \"Generator Room\",\n\
+          \        \"地磅\": \"Weighbridge\",\n        \"粉料罐\": \"Powder Silo\",\n \
+          \       \"骨料仓\": \"Aggregate Bin\",\n        \"配料机\": \"Batcher\",\n   \
+          \     \"斜皮带机\": \"Inclined Belt Conveyor\",\n        \"传送带\": \"Belt Conveyor\"\
+          ,\n        \"分料机\": \"Material Distributor\",\n        \"挡土墙\": \"Retaining\
+          \ Wall\",\n        \"围墙\": \"Perimeter Wall\",\n        \"基础柱子\": \"Foundation\
+          \ Columns\",\n        \"地圈梁\": \"Foundation Beam\",\n        \"筏板基础\": \"\
+          Raft Foundation\",\n        \n        # 混凝土工程\n        \"垫层浇筑\": \"Pouring\
+          \ of Lean Concrete\",\n        \"混凝土浇筑\": \"Concrete Pouring\",\n      \
+          \  \"模板架设\": \"Formwork Erection\",\n        \"模板拼接\": \"Formwork Assembly\"\
+          ,\n        \"模板拆卸\": \"Formwork Dismantling\",\n        \"钢筋绑扎\": \"Rebar\
+          \ Tying\",\n        \"钢筋加工\": \"Rebar Processing\",\n        \"钢筋棚搭设\":\
+          \ \"Erection of Rebar Shed\",\n        \"预埋件安装\": \"Installation of Embedded\
+          \ Parts\",\n        \"基础凿毛\": \"Scarification\",\n        \"施工缝凿毛\": \"\
+          Chipping at Construction Joints\",\n        \"基坑夯实\": \"Compaction of Foundation\
+          \ Pit\",\n        \"养护\": \"Curing\",\n        \n        # 锚固工程\n      \
+          \  \"自进式锚杆钻孔\": \"Self-Drilling Anchor Bolt Hole Drilling\",\n        \"\
+          砂浆锚杆\": \"Mortar Anchor Bolt\",\n        \"排水孔钻孔\": \"Drainage Hole Drilling\"\
+          ,\n        \"锚杆注浆\": \"Grouting of Rock Bolts\",\n        \"涵管安装\": \"Installation\
+          \ of Culvert Pipes\",\n        \"临时卸料平台\": \"Temporary Concrete Discharging\
+          \ Platform\",\n        \"脚手架拼接\": \"Scaffold Assembly\",\n        \"防水塑料膜铺设\"\
+          : \"Laying of Waterproof Plastic Membrane\",\n        \n        # 电力工程\n\
+          \        \"左岸中心变电站\": \"Left Bank Central Substation\",\n        \"输电铁塔\"\
+          : \"Transmission Tower\",\n        \"水泥电杆\": \"Concrete Power Pole\",\n\
+          \        \"电杆基础\": \"Pole Foundation\",\n        \"立杆作业\": \"Pole Erection\"\
+          ,\n        \"横担安装\": \"Cross-arm Installation\",\n        \"瓷瓶\": \"Insulator\"\
+          ,\n        \"导线安装\": \"Conductor Installation\",\n        \"架设线路\": \"Conductor\
+          \ Stringing\",\n        \"拉线安装\": \"Stay Wire Installation\",\n        \"\
+          电杆迁移\": \"Relocation of Poles\",\n        \"电杆转运\": \"Transfer of Electric\
+          \ Poles\",\n        \"变配电室\": \"Power Distribution Room\",\n        \"线路走向查堪\"\
+          : \"Survey of Line Alignment\",\n        \"技术交底\": \"Technical Disclosure\"\
+          ,\n        \n        # 机械设备\n        \"反铲挖掘机\": \"Backhoe Excavator\",\n\
+          \        \"装载机\": \"Loader\",\n        \"25t自卸汽车\": \"25t Dump Truck\",\n\
+          \        \"推土机\": \"Bulldozer\",\n        \"压路机\": \"Road Roller\",\n  \
+          \      \"平地机\": \"Motor Grader\",\n        \"洒水车\": \"Water Truck\",\n \
+          \       \"钻孔设备\": \"Drilling Rig\",\n        \"潜孔钻\": \"Down-the-hole (DTH)\
+          \ Drill\",\n        \"柴油空压机\": \"Diesel Air Compressor\",\n        \"无人机\"\
+          : \"UAV (Unmanned Aerial Vehicle)\",\n        \n        # 安全设施\n       \
+          \ \"警示标识牌\": \"Warning Signs\",\n        \"道路警示柱\": \"Warning Bollards\"\
+          ,\n        \"临边防护\": \"Edge Protection\",\n        \"防护栏\": \"Protective\
+          \ Railings\",\n        \"围挡\": \"Fencing\",\n        \"沉淀池\": \"Sediment\
+          \ Pond\",\n        \"施工用水池\": \"Construction Water Tank\",\n        \"移动厕所\"\
+          : \"Mobile Toilet\",\n        \n        # 状态\n        \"暂停施工\": \"Work Suspended\"\
+          ,\n        \"待命\": \"Standby\",\n        \"无安全隐患\": \"No safety hazards\"\
+          ,\n        \n        # 会议检查\n        \"HSE专题月例会\": \"Monthly HSE Subject\
+          \ Meeting\",\n        \"月度综合大检查\": \"Monthly Site Safety Inspection\",\n\
+          \        \n        # 其他\n        \"人工播草种\": \"Manual Grass Seeding\",\n\
+          \        \"洒水降尘\": \"Dust Suppression via Watering\",\n        \"洒水控制扬尘\"\
+          : \"Dust Suppression via Watering\",\n        \"筛分车间\": \"Screening Workshop\"\
+          ,\n        \"破碎车间\": \"Crushing Workshop\",\n        \"制砂\": \"Sand Making\"\
+          ,\n        \"调节料堆\": \"Regulating Stockpile\",\n        \"成品料仓\": \"Finished\
+          \ Product Bin\",\n        \"分叉\": \"Branch/Fork\"\n    }\n    \n    if not\
+          \ data_for_translation:\n        return {\n            \"matched_glossary\"\
+          : \"无匹配术语\",\n            \"data_pass\": \"[]\"\n        }\n    \n    #\
+          \ 收集所有匹配的术语\n    matched = []\n    matched_set = set()\n    sorted_terms\
+          \ = sorted(GLOSSARY.keys(), key=len, reverse=True)\n    \n    for term in\
+          \ sorted_terms:\n        if term in data_for_translation and term not in\
+          \ matched_set:\n            matched.append(f\"{term} = {GLOSSARY[term]}\"\
+          )\n            matched_set.add(term)\n    \n    return {\n        \"matched_glossary\"\
+          : \"\\n\".join(matched) if matched else \"无特殊术语\",\n        \"data_pass\"\
+          : data_for_translation\n    }"
+        code_language: python3
+        outputs:
+          data_pass:
+            children: null
+            type: string
+          matched_glossary:
+            children: null
+            type: string
+        selected: false
+        title: 翻译术语匹配
+        type: code
+        variables:
+        - value_selector:
+          - '1765618453034'
+          - data_for_translation
+          value_type: string
+          variable: data_for_translation
+      height: 52
+      id: '1765798597797'
+      position:
+        x: -118.28978200093643
+        y: 657.6748839913537
+      positionAbsolute:
+        x: -118.28978200093643
+        y: 657.6748839913537
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: langgenius/gemini/google
+        prompt_template:
+        - id: 27f63f2a-a865-44fd-a8ef-bb0e8f7bcdf0
+          role: system
+          text: '你是北本水电站项目的专业工程翻译，负责将施工日报翻译成英文。
+
+
+
+            翻译原则:
+
+            1. 严格使用提供的术语对照表翻译，确保术语一致性
+
+            2. 保留高程信息如 (EL.611m)
+
+            3. 数字和单位使用国际标准 (m³, m², m, t)
+
+            4. 句子结构符合工程报告的正式英文表达
+
+            5. 输出严格JSON格式'
+        - id: d4b26587-8112-47a4-b58e-8c691c698254
+          role: user
+          text: '将以下施工数据翻译成英文。
+
+
+
+            ## 匹配到的术语 (优先使用):
+
+            {{#1765798597797.matched_glossary#}}
+
+
+
+            ## 施工部位标准翻译:
+
+            右岸道路 = Right Bank Roads
+
+            炸药库 = Explosives Magazine
+
+            右岸砂石骨料加工系统 = Right Bank Aggregate System
+
+            右岸临时120拌合站 = Right Bank Temporary Batching Plant 120(m³/h)
+
+            右岸拌合系统 = Right Bank Batching System
+
+            右岸坝肩 = Right Bank Abutment
+
+            右岸引航道 = Right Bank Approach Channel
+
+            上游全年围堰 U/S Traversal Cofferdam
+
+            右坝肩 Right Abutment
+
+            船闸 Ship Lock
+
+            下游引航道EL.313.0以上 D/S Approach Channel > EL.313.0
+
+            下游引航道EL.313.0~302.0 D/S Approach Channel EL.313.0-302.0
+
+            下游引航道EL.342.0以上 DS Approach Channel > EL.342.0
+
+            枯期围堰 Dry-season Cofferdam
+
+            纵向围堰 Longitudinal Cofferdam
+
+            冲积层Ⅰ区 Alluvial Layer Zone I
+
+            泄洪冲沙闸 Spillway
+
+            下游全年围堰 D/S Traversal Cofferdam
+
+            冲积层Ⅲ区 Alluvial Layer Zone III
+
+
+            ## 翻译规则:
+
+            - 对于"A至B道路整平"类句式 → "Road surface grading of the road from A to B"
+
+            - 白班 → Day Shift, 夜班 → Night Shift
+
+            - 新术语记录到 new_terms 数组
+
+
+
+            ## 待翻译数据:
+
+            {{#1765798597797.data_pass#}}
+
+
+
+            ## 输出格式 (严格JSON):
+
+            {
+
+              "translated_data": [
+
+                {"seq": 序号, "location_en": "英文部位", "content_en": "英文内容", "quantity_en":
+            "数量", "remarks_en": "备注"}
+
+              ],
+
+              "new_terms": []
+
+            }'
+        selected: false
+        title: 翻译日报
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1765946126395'
+      position:
+        x: -118.28978200093643
+        y: 729.0011864712185
+      positionAbsolute:
+        x: -118.28978200093643
+        y: 729.0011864712185
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        author: Dify
+        desc: ''
+        height: 88
+        selected: false
+        showAuthor: true
+        text: ''
+        theme: blue
+        title: ''
+        type: ''
+        width: 240
+      height: 88
+      id: '1766560001007'
+      position:
+        x: -748.3651293253002
+        y: 528.8687945222113
+      positionAbsolute:
+        x: -748.3651293253002
+        y: 528.8687945222113
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 240
+    viewport:
+      x: 281.8577989546818
+      y: -213.90874245664213
+      zoom: 1.3195079107728958
+  rag_pipeline_variables: []
