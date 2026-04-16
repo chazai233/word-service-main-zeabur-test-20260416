@@ -438,6 +438,7 @@ class FillTemplateRequest(BaseModel):
     content: str
     daily_stats: Optional[List[Dict[str, Any]]] = None
     daily_stats_base64: Optional[str] = None
+    strict_unit_check: bool = False
     table_index: int = 0
     row_index: int = 4
     col_index: int = 2
@@ -472,6 +473,7 @@ async def fill_template(req: FillTemplateRequest):
     try:
         file_bytes = base64.b64decode(req.template_base64)
         doc = Document(io.BytesIO(file_bytes))
+        warnings: List[str] = []
 
         # 模式1：当日施工统计表动态更新（优先）
         use_daily_stats_mode = False
@@ -494,9 +496,14 @@ async def fill_template(req: FillTemplateRequest):
         if use_daily_stats_mode:
             bad_quantity_rows = detect_suspect_quantity(normalized_items)
             if bad_quantity_rows:
-                raise ValueError(
-                    "检测到损坏单位（如 m? / m�），已拒绝渲染。"
-                    f"请修正后重试，问题行: {bad_quantity_rows}"
+                if req.strict_unit_check:
+                    raise ValueError(
+                        "检测到损坏单位（如 m? / m�），已拒绝渲染。"
+                        f"请修正后重试，问题行: {bad_quantity_rows}"
+                    )
+                warnings.append(
+                    "检测到损坏单位（如 m? / m�），已按原值保留并继续渲染。"
+                    f"问题行: {bad_quantity_rows}"
                 )
             if detect_garbled_daily_stats(normalized_items):
                 raise ValueError(
@@ -521,7 +528,10 @@ async def fill_template(req: FillTemplateRequest):
         
         out = io.BytesIO()
         doc.save(out)
-        return {"success": True, "document_base64": base64.b64encode(out.getvalue()).decode()}
+        result = {"success": True, "document_base64": base64.b64encode(out.getvalue()).decode()}
+        if warnings:
+            result["warnings"] = warnings
+        return result
     except Exception as e:
         import traceback
         traceback.print_exc()
