@@ -203,6 +203,28 @@ def pick_first_value(item: Dict[str, Any], keys: List[str], default: str = "") -
     return default
 
 
+def normalize_quantity_text(quantity: str, content: str = "") -> str:
+    q = (quantity or "").strip()
+    if not q:
+        return q
+
+    # 先处理常见写法
+    q = q.replace("㎡", "m²").replace("m2", "m²").replace("m^2", "m²")
+    q = q.replace("m3", "m³").replace("m^3", "m³")
+
+    # 编码损坏常见形态：m? / m� -> 依据内容粗略猜测 m² 或 m³
+    if re.search(r"m[\?�]", q):
+        content_lc = (content or "").lower()
+        area_hints = [
+            "surface", "slope", "clearing", "cleaning",
+            "清表", "边坡", "路面", "面积"
+        ]
+        unit = "m²" if any(h in content_lc for h in area_hints) else "m³"
+        q = re.sub(r"m[\?�]", unit, q)
+
+    return q
+
+
 def normalize_daily_stats_items(raw_items: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     def normalize_text(text: str) -> str:
         text = "" if text is None else str(text)
@@ -218,12 +240,18 @@ def normalize_daily_stats_items(raw_items: List[Dict[str, Any]]) -> List[Dict[st
     for raw in raw_items:
         if not isinstance(raw, dict):
             continue
+        seq_text = normalize_text(pick_first_value(raw, ["seq", "序号", "sn", "serial"], ""))
+        location_text = normalize_text(pick_first_value(raw, ["location", "施工部位", "area"], ""))
+        content_text = normalize_text(pick_first_value(raw, ["content", "施工内容", "activity"], ""))
+        quantity_text = normalize_text(pick_first_value(raw, ["quantity", "日完成量", "完成工程量", "qty"], ""))
+        remarks_text = normalize_text(pick_first_value(raw, ["remarks", "备注", "remark"], ""))
+
         row = {
-            "seq": normalize_text(pick_first_value(raw, ["seq", "序号", "sn", "serial"], "")),
-            "location": normalize_text(pick_first_value(raw, ["location", "施工部位", "area"], "")),
-            "content": normalize_text(pick_first_value(raw, ["content", "施工内容", "activity"], "")),
-            "quantity": normalize_text(pick_first_value(raw, ["quantity", "日完成量", "完成工程量", "qty"], "")),
-            "remarks": normalize_text(pick_first_value(raw, ["remarks", "备注", "remark"], "")),
+            "seq": seq_text,
+            "location": location_text,
+            "content": content_text,
+            "quantity": normalize_quantity_text(quantity_text, content_text),
+            "remarks": remarks_text,
         }
         # 施工内容为空的数据直接忽略
         if row["content"]:
