@@ -155,27 +155,40 @@ def update_table_row(table, row_name: str, today: str, total: str):
             return
 
 
-DAILY_STATS_HEADERS = ["序号", "施工部位", "施工内容", "日完成量", "备注"]
+DAILY_STATS_HEADER_CANDIDATES: Dict[str, List[str]] = {
+    "seq": ["序号", "S/N", "SN"],
+    "location": ["施工部位", "Construction Area"],
+    "content": ["施工内容", "Activities", "Activity"],
+    "quantity": ["日完成量", "完成工程量", "Quantities Completed", "Planned Qty.", "Qty."],
+    "remarks": ["备注", "Remarks"],
+}
 
 
 def normalize_header_text(text: str) -> str:
-    return re.sub(r"\s+", "", text or "")
+    # 统一去空白并小写，便于中英表头做 contains 匹配
+    return re.sub(r"\s+", "", text or "").lower()
 
 
 def find_daily_stats_table(doc: Document):
     """
     自动识别“当日施工统计表”：
-    需在同一表头行识别到：序号、施工部位、施工内容、日完成量、备注
+    需在同一表头行识别到：
+    - 中文：序号、施工部位、施工内容、日完成量、备注
+    - 英文：S/N、Construction Area、Activities、Quantities Completed、Remarks
     """
     for table in doc.tables:
         for row_index, row in enumerate(table.rows):
             header_map: Dict[str, int] = {}
             for col_index, cell in enumerate(row.cells):
                 cell_text = normalize_header_text(cell.text)
-                for header in DAILY_STATS_HEADERS:
-                    if header in cell_text and header not in header_map:
-                        header_map[header] = col_index
-            if len(header_map) == len(DAILY_STATS_HEADERS):
+                for canonical_key, candidates in DAILY_STATS_HEADER_CANDIDATES.items():
+                    if canonical_key in header_map:
+                        continue
+                    for candidate in candidates:
+                        if normalize_header_text(candidate) in cell_text:
+                            header_map[canonical_key] = col_index
+                            break
+            if len(header_map) == len(DAILY_STATS_HEADER_CANDIDATES):
                 return table, row_index, header_map
     return None, None, None
 
@@ -336,7 +349,11 @@ def apply_vertical_merge(table, data_start_row: int, items: List[Dict[str, str]]
 def render_daily_stats_table(doc: Document, items: List[Dict[str, str]]):
     table, header_row_index, header_map = find_daily_stats_table(doc)
     if table is None:
-        raise ValueError("未找到“当日施工统计表”（表头需包含：序号/施工部位/施工内容/日完成量/备注）")
+        raise ValueError(
+            "未找到“当日施工统计表”（表头需包含："
+            "序号/施工部位/施工内容/日完成量/备注 或 "
+            "S/N/Construction Area/Activities/Quantities Completed/Remarks）"
+        )
 
     data_start_row = header_row_index + 1
     style_row_index = data_start_row if len(table.rows) > data_start_row else header_row_index
@@ -350,11 +367,11 @@ def render_daily_stats_table(doc: Document, items: List[Dict[str, str]]):
     for _ in items:
         table._tbl.append(deepcopy(style_row_xml))
 
-    seq_col = header_map["序号"]
-    location_col = header_map["施工部位"]
-    content_col = header_map["施工内容"]
-    quantity_col = header_map["日完成量"]
-    remarks_col = header_map["备注"]
+    seq_col = header_map["seq"]
+    location_col = header_map["location"]
+    content_col = header_map["content"]
+    quantity_col = header_map["quantity"]
+    remarks_col = header_map["remarks"]
 
     # 写入数据（样式继承自模板行）
     for idx, item in enumerate(items):
