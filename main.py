@@ -212,17 +212,20 @@ def normalize_quantity_text(quantity: str, content: str = "") -> str:
     q = q.replace("㎡", "m²").replace("m2", "m²").replace("m^2", "m²")
     q = q.replace("m3", "m³").replace("m^3", "m³")
 
-    # 编码损坏常见形态：m? / m� -> 依据内容粗略猜测 m² 或 m³
-    if re.search(r"m[\?�]", q):
-        content_lc = (content or "").lower()
-        area_hints = [
-            "surface", "slope", "clearing", "cleaning",
-            "清表", "边坡", "路面", "面积"
-        ]
-        unit = "m²" if any(h in content_lc for h in area_hints) else "m³"
-        q = re.sub(r"m[\?�]", unit, q)
-
     return q
+
+
+def detect_suspect_quantity(items: List[Dict[str, str]]) -> List[int]:
+    """
+    严格模式：禁止对损坏单位做猜测修复。
+    若出现 m? / m� 等异常单位，返回对应行号（1-based）。
+    """
+    bad_rows: List[int] = []
+    for i, item in enumerate(items, start=1):
+        q = (item.get("quantity") or "").strip()
+        if re.search(r"m[\?\uFFFD]", q):
+            bad_rows.append(i)
+    return bad_rows
 
 
 def normalize_daily_stats_items(raw_items: List[Dict[str, Any]]) -> List[Dict[str, str]]:
@@ -489,6 +492,12 @@ async def fill_template(req: FillTemplateRequest):
                 normalized_items = parsed
 
         if use_daily_stats_mode:
+            bad_quantity_rows = detect_suspect_quantity(normalized_items)
+            if bad_quantity_rows:
+                raise ValueError(
+                    "检测到损坏单位（如 m? / m�），已拒绝渲染。"
+                    f"请修正后重试，问题行: {bad_quantity_rows}"
+                )
             if detect_garbled_daily_stats(normalized_items):
                 raise ValueError(
                     "检测到疑似乱码（内容出现 ??? 且无中文）。请使用 UTF-8 JSON，"
