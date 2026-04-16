@@ -35,6 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CN_TEMPLATE_PATH = os.path.join(BASE_DIR, "templates", "cn-template.docx")
+EN_TEMPLATE_PATH = os.path.join(BASE_DIR, "templates", "en-template.docx")
+
 # ---------------- 核心排版逻辑 ----------------
 
 def format_run_font(run, size=10.5, bold=False):
@@ -314,6 +318,77 @@ def parse_daily_stats_from_content(content: str) -> Optional[List[Dict[str, str]
     return normalize_daily_stats_items(data)
 
 
+def parse_daily_stats_json_text(text: Optional[str]) -> Optional[List[Dict[str, str]]]:
+    if not isinstance(text, str):
+        return None
+    raw = text.strip()
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return None
+    if not isinstance(data, list):
+        return None
+    return normalize_daily_stats_items(data)
+
+
+def parse_english_translated_items(raw_text: Optional[str]) -> Optional[List[Dict[str, str]]]:
+    if not isinstance(raw_text, str):
+        return None
+    raw = raw_text.strip()
+    if not raw:
+        return None
+
+    data_obj: Any = None
+    try:
+        data_obj = json.loads(raw)
+    except Exception:
+        match = re.search(r"\{[\s\S]*\}", raw)
+        if match:
+            try:
+                data_obj = json.loads(match.group())
+            except Exception:
+                return None
+        else:
+            return None
+
+    translated = None
+    if isinstance(data_obj, dict):
+        translated = data_obj.get("translated_data")
+    elif isinstance(data_obj, list):
+        translated = data_obj
+
+    if not isinstance(translated, list):
+        return None
+
+    items: List[Dict[str, str]] = []
+    for row in translated:
+        if not isinstance(row, dict):
+            continue
+        seq_text = str(row.get("seq", "")).strip()
+        location_text = str(row.get("location_en") or row.get("location") or "").strip()
+        content_text = str(row.get("content_en") or row.get("content") or "").strip()
+        quantity_raw = str(row.get("quantity_en") or row.get("quantity") or "").strip()
+        remarks_text = str(
+            row.get("remarks_en") or row.get("remarks") or row.get("shift") or ""
+        ).strip()
+
+        if not content_text:
+            continue
+
+        items.append(
+            {
+                "seq": seq_text,
+                "location": location_text,
+                "content": content_text,
+                "quantity": normalize_quantity_text(quantity_raw, content_text),
+                "remarks": remarks_text,
+            }
+        )
+    return items or None
+
+
 def set_cell_text_preserve_style(cell, text: str):
     """
     不破坏模板单元格样式地写入文本：
@@ -446,6 +521,12 @@ class FillTemplateRequest(BaseModel):
     upload_to_feishu: bool = False
     feishu_token: Optional[str] = None
 
+
+class GenerateFromTemplateRequest(BaseModel):
+    daily_stats_base64: Optional[str] = None
+    chinese_data: Optional[str] = None
+    english_data: Optional[str] = None
+
 class UpdateDateWeatherRequest(BaseModel):
     document_base64: str
     feishu_token: Optional[str] = None
@@ -467,6 +548,62 @@ class UpdateAppendixRequest(BaseModel):
     feishu_token: Optional[str] = None
 
 # ---------------- API 接口实现 ----------------
+
+@app.get("/")
+async def root():
+    return {"success": True, "message": "Word service is running"}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.post("/generate-from-template")
+async def generate_from_template(req: GenerateFromTemplateRequest):
+    try:
+        if not os.path.exists(CN_TEMPLATE_PATH):
+            raise FileNotFoundError("找不到中文模板文件：templates/cn-template.docx")
+        if not os.path.exists(EN_TEMPLATE_PATH):
+            raise FileNotFoundError("找不到英文模板文件：templates/en-template.docx")
+
+        cn_items = parse_daily_stats_from_base64(req.daily_stats_base64 or "")
+        if cn_items is None:
+            cn_items = parse_daily_stats_json_text(req.chinese_data)
+        if cn_items is None:
+            cn_items = []
+        if not cn_items:
+            raise ValueError("未解析到可用的中文施工统计数据")
+
+        bad_rows = detect_suspect_quantity(cn_items)
+        if bad_rows:
+            return {"success": False, "message": f"检测到疑似损坏单位（如 m?），问题行: {bad_rows}"}
+        if detect_garbled_daily_stats(cn_items):
+            raise ValueError("检测到疑似乱码，请确保 daily_stats_base64/chinese_data 使用 UTF-8")
+
+        en_items = parse_english_translated_items(req.english_data)
+        if en_items is None:
+            en_items = cn_items
+
+        cn_doc = Document(CN_TEMPLATE_PATH)
+        render_daily_stats_table(cn_doc, cn_items)
+        cn_out = io.BytesIO()
+        cn_doc.save(cn_out)
+
+        en_doc = Document(EN_TEMPLATE_PATH)
+        render_daily_stats_table(en_doc, en_items)
+        en_out = io.BytesIO()
+        en_doc.save(en_out)
+
+        return {
+            "success": True,
+            "cn_document_base64": base64.b64encode(cn_out.getvalue()).decode(),
+            "en_document_base64": base64.b64encode(en_out.getvalue()).decode(),
+            "weather_info": {"date": "", "weather": "", "temp": ""},
+        }
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
 
 @app.post("/fill-template")
 async def fill_template(req: FillTemplateRequest):
