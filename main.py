@@ -11,8 +11,11 @@ import io
 import json
 import re
 import os
+import requests
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from zoneinfo import ZoneInfo
+from urllib.parse import urlparse, parse_qs
 from typing import List, Optional, Dict, Any
 from enum import Enum
 
@@ -38,6 +41,8 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CN_TEMPLATE_PATH = os.path.join(BASE_DIR, "templates", "cn-template.docx")
 EN_TEMPLATE_PATH = os.path.join(BASE_DIR, "templates", "en-template.docx")
+BANGKOK_TZ = ZoneInfo("Asia/Bangkok")
+PAKBENG_COORD_FALLBACK = (19.8933, 101.1348)
 
 # ---------------- 核心排版逻辑 ----------------
 
@@ -389,6 +394,326 @@ def parse_english_translated_items(raw_text: Optional[str]) -> Optional[List[Dic
     return items or None
 
 
+def parse_trigger_date(value: Optional[str]) -> date:
+    if isinstance(value, str):
+        text = value.strip()
+        if text:
+            for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d"):
+                try:
+                    return datetime.strptime(text, fmt).date()
+                except Exception:
+                    pass
+            try:
+                return datetime.fromisoformat(text).date()
+            except Exception:
+                pass
+    return datetime.now(BANGKOK_TZ).date()
+
+
+def format_cn_date(d: date) -> str:
+    return f"{d.year}年{d.month}月{d.day}日"
+
+
+def format_en_date(d: date) -> str:
+    months = ["Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."]
+    return f"{months[d.month - 1]} {d.day}, {d.year}"
+
+
+def _get_pakbeng_coordinates() -> tuple[float, float]:
+    try:
+        resp = requests.get(
+            "https://geocoding-api.open-meteo.com/v1/search",
+            params={"name": "Pak Beng", "country_code": "LA", "count": 1, "language": "en", "format": "json"},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        results = data.get("results") or []
+        if results:
+            return float(results[0]["latitude"]), float(results[0]["longitude"])
+    except Exception:
+        pass
+    return PAKBENG_COORD_FALLBACK
+
+
+def _weather_code_text(code: Optional[int]) -> tuple[str, str]:
+    mapping = {
+        0: ("晴", "Clear"),
+        1: ("大部晴朗", "Mainly Clear"),
+        2: ("局部多云", "Partly Cloudy"),
+        3: ("阴", "Overcast"),
+        45: ("雾", "Fog"),
+        48: ("雾凇", "Depositing Rime Fog"),
+        51: ("小毛毛雨", "Light Drizzle"),
+        53: ("中毛毛雨", "Moderate Drizzle"),
+        55: ("大毛毛雨", "Dense Drizzle"),
+        56: ("冻毛毛雨", "Freezing Drizzle"),
+        57: ("强冻毛毛雨", "Dense Freezing Drizzle"),
+        61: ("小雨", "Slight Rain"),
+        63: ("中雨", "Moderate Rain"),
+        65: ("大雨", "Heavy Rain"),
+        66: ("冻雨", "Freezing Rain"),
+        67: ("强冻雨", "Heavy Freezing Rain"),
+        71: ("小雪", "Slight Snow"),
+        73: ("中雪", "Moderate Snow"),
+        75: ("大雪", "Heavy Snow"),
+        77: ("雪粒", "Snow Grains"),
+        80: ("阵雨", "Rain Showers"),
+        81: ("较强阵雨", "Moderate Rain Showers"),
+        82: ("强阵雨", "Violent Rain Showers"),
+        85: ("阵雪", "Snow Showers"),
+        86: ("强阵雪", "Heavy Snow Showers"),
+        95: ("雷暴", "Thunderstorm"),
+        96: ("雷暴伴小冰雹", "Thunderstorm with Hail"),
+        99: ("雷暴伴大冰雹", "Thunderstorm with Heavy Hail"),
+    }
+    return mapping.get(code, ("未知", "Unknown"))
+
+
+def _wind_force_text(speed_kmh: Optional[float]) -> tuple[str, str]:
+    if speed_kmh is None:
+        return "未知", "Unknown"
+    steps = [
+        (1, "无风", "Calm"),
+        (6, "软风", "Light Air"),
+        (12, "轻风", "Light Breeze"),
+        (20, "微风", "Gentle Breeze"),
+        (29, "和风", "Moderate Breeze"),
+        (39, "清劲风", "Fresh Breeze"),
+        (50, "强风", "Strong Breeze"),
+        (62, "疾风", "High Wind"),
+        (75, "大风", "Gale"),
+        (89, "烈风", "Strong Gale"),
+        (103, "狂风", "Storm"),
+        (118, "暴风", "Violent Storm"),
+    ]
+    for bound, zh, en in steps:
+        if speed_kmh < bound:
+            return zh, en
+    return "飓风", "Hurricane"
+
+
+def _temp_text(min_temp: Optional[float], max_temp: Optional[float]) -> str:
+    if min_temp is None or max_temp is None:
+        return "--"
+    return f"{round(min_temp)}℃/{round(max_temp)}℃"
+
+
+def fetch_pakbeng_weather(target_date: date) -> tuple[Dict[str, str], Optional[str]]:
+    weather = {
+        "weather_zh": "未知",
+        "weather_en": "Unknown",
+        "wind_zh": "未知",
+        "wind_en": "Unknown",
+        "temp": "--",
+    }
+    try:
+        lat, lon = _get_pakbeng_coordinates()
+        today = datetime.now(BANGKOK_TZ).date()
+        use_archive = target_date <= today
+        base_url = "https://archive-api.open-meteo.com/v1/archive" if use_archive else "https://api.open-meteo.com/v1/forecast"
+        resp = requests.get(
+            base_url,
+            params={
+                "latitude": lat,
+                "longitude": lon,
+                "start_date": target_date.isoformat(),
+                "end_date": target_date.isoformat(),
+                "daily": "weather_code,temperature_2m_min,temperature_2m_max,wind_speed_10m_max",
+                "timezone": "Asia/Bangkok",
+            },
+            timeout=25,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        daily = data.get("daily") or {}
+        code = (daily.get("weather_code") or [None])[0]
+        temp_min = (daily.get("temperature_2m_min") or [None])[0]
+        temp_max = (daily.get("temperature_2m_max") or [None])[0]
+        wind_speed = (daily.get("wind_speed_10m_max") or [None])[0]
+        weather_zh, weather_en = _weather_code_text(code if isinstance(code, int) else None)
+        wind_zh, wind_en = _wind_force_text(float(wind_speed) if wind_speed is not None else None)
+        weather = {
+            "weather_zh": weather_zh,
+            "weather_en": weather_en,
+            "wind_zh": wind_zh,
+            "wind_en": wind_en,
+            "temp": _temp_text(temp_min, temp_max),
+        }
+        return weather, None
+    except Exception as e:
+        return weather, f"天气获取失败，已使用默认值: {e}"
+
+
+def _parse_bitable_date(value: Any) -> Optional[date]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        ts = float(value)
+        if ts > 1_000_000_000_000:
+            ts = ts / 1000.0
+        try:
+            return datetime.fromtimestamp(ts, tz=BANGKOK_TZ).date()
+        except Exception:
+            return None
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return None
+        normalized = raw.replace("年", "-").replace("月", "-").replace("日", "").replace("/", "-").replace(".", "-")
+        for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return datetime.strptime(normalized, fmt).date()
+            except Exception:
+                pass
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00")).astimezone(BANGKOK_TZ).date()
+        except Exception:
+            return None
+    if isinstance(value, list):
+        for item in value:
+            d = _parse_bitable_date(item)
+            if d:
+                return d
+        return None
+    if isinstance(value, dict):
+        for key in ("value", "text", "name", "date"):
+            if key in value:
+                d = _parse_bitable_date(value.get(key))
+                if d:
+                    return d
+    return None
+
+
+def _parse_water_level_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)):
+        return f"{value}".strip()
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        for item in value:
+            text = _parse_water_level_text(item)
+            if text:
+                return text
+        return ""
+    if isinstance(value, dict):
+        for key in ("text", "name", "value"):
+            text = _parse_water_level_text(value.get(key))
+            if text:
+                return text
+    return str(value).strip()
+
+
+def _parse_bitable_from_url(url: str) -> tuple[Optional[str], Optional[str]]:
+    if not url:
+        return None, None
+    parsed = urlparse(url)
+    app_token = parsed.path.strip("/").split("/")[-1] if parsed.path else None
+    query = parse_qs(parsed.query or "")
+    table_id = (query.get("table") or [None])[0]
+    return app_token, table_id
+
+
+def fetch_water_level_from_feishu(target_date: date) -> tuple[Dict[str, Any], Optional[str]]:
+    result = {"water_level": "--", "source_date": None}
+    app_id = os.getenv("FEISHU_APP_ID", "").strip()
+    app_secret = os.getenv("FEISHU_APP_SECRET", "").strip()
+    app_token = os.getenv("FEISHU_BITABLE_APP_TOKEN", "").strip()
+    table_id = os.getenv("FEISHU_BITABLE_TABLE_ID", "").strip()
+    date_field = os.getenv("FEISHU_BITABLE_DATE_FIELD", "观测日期").strip() or "观测日期"
+    water_field = os.getenv("FEISHU_BITABLE_WATER_LEVEL_FIELD", "水位高程").strip() or "水位高程"
+    if (not app_token or not table_id) and os.getenv("FEISHU_BITABLE_URL"):
+        p_app_token, p_table_id = _parse_bitable_from_url(os.getenv("FEISHU_BITABLE_URL", ""))
+        app_token = app_token or (p_app_token or "")
+        table_id = table_id or (p_table_id or "")
+
+    if not app_id or not app_secret or not app_token or not table_id:
+        return result, "飞书参数未完整配置，已使用默认水位"
+
+    try:
+        token_resp = requests.post(
+            "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
+            json={"app_id": app_id, "app_secret": app_secret},
+            timeout=20,
+        )
+        token_resp.raise_for_status()
+        token_data = token_resp.json()
+        if token_data.get("code") != 0:
+            raise ValueError(token_data.get("msg", "tenant_access_token 获取失败"))
+        tenant_access_token = token_data.get("tenant_access_token")
+        if not tenant_access_token:
+            raise ValueError("tenant_access_token 为空")
+
+        headers = {"Authorization": f"Bearer {tenant_access_token}"}
+        page_token = None
+        rows = []
+        while True:
+            params = {"page_size": 500}
+            if page_token:
+                params["page_token"] = page_token
+            resp = requests.get(
+                f"https://open.feishu.cn/open-apis/bitable/v1/apps/{app_token}/tables/{table_id}/records",
+                headers=headers,
+                params=params,
+                timeout=25,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("code") != 0:
+                raise ValueError(data.get("msg", "bitable records 获取失败"))
+            payload = data.get("data") or {}
+            for item in payload.get("items", []):
+                fields = item.get("fields") or {}
+                obs_date = _parse_bitable_date(fields.get(date_field))
+                water_text = _parse_water_level_text(fields.get(water_field))
+                if water_text:
+                    rows.append({"date": obs_date, "water_level": water_text})
+            if not payload.get("has_more"):
+                break
+            page_token = payload.get("page_token")
+            if not page_token:
+                break
+
+        if not rows:
+            return result, "飞书未查询到水位记录，已使用默认水位"
+
+        dated_rows = [x for x in rows if isinstance(x.get("date"), date)]
+        selected = None
+        if dated_rows:
+            valid = [x for x in dated_rows if x["date"] <= target_date]
+            selected = max(valid, key=lambda x: x["date"]) if valid else max(dated_rows, key=lambda x: x["date"])
+        if selected is None:
+            selected = rows[0]
+
+        result["water_level"] = selected.get("water_level") or "--"
+        result["source_date"] = selected.get("date")
+        return result, None
+    except Exception as e:
+        return result, f"飞书水位获取失败，已使用默认水位: {e}"
+
+
+def update_first_table_summary(
+    doc: Document,
+    date_text: str,
+    weather_text: str,
+    wind_text: str,
+    water_level_text: str,
+    temp_text: str,
+) -> bool:
+    if not doc.tables:
+        return False
+    table = doc.tables[0]
+    if len(table.rows) < 2 or len(table.rows[1].cells) < 5:
+        return False
+    values = [date_text, weather_text, wind_text, water_level_text, temp_text]
+    row = table.rows[1]
+    for idx, value in enumerate(values):
+        set_cell_text_preserve_style(row.cells[idx], value)
+    return True
+
+
 def set_cell_text_preserve_style(cell, text: str):
     """
     不破坏模板单元格样式地写入文本：
@@ -528,6 +853,7 @@ class GenerateFromTemplateRequest(BaseModel):
     english_data: Optional[str] = None
     cn_template_base64: Optional[str] = None
     en_template_base64: Optional[str] = None
+    trigger_date: Optional[str] = None
 
 class UpdateDateWeatherRequest(BaseModel):
     document_base64: str
@@ -575,6 +901,9 @@ async def generate_from_template(req: GenerateFromTemplateRequest):
                 return Document(fallback_path)
             raise FileNotFoundError(f"未提供 {label}_template_base64，且找不到本地模板文件：{fallback_path}")
 
+        warnings: List[str] = []
+        trigger_day = parse_trigger_date(req.trigger_date)
+
         cn_items = parse_daily_stats_from_base64(req.daily_stats_base64 or "")
         if cn_items is None:
             cn_items = parse_daily_stats_json_text(req.chinese_data)
@@ -593,22 +922,60 @@ async def generate_from_template(req: GenerateFromTemplateRequest):
         if en_items is None:
             en_items = cn_items
 
+        weather_data, weather_warning = fetch_pakbeng_weather(trigger_day)
+        if weather_warning:
+            warnings.append(weather_warning)
+        water_data, water_warning = fetch_water_level_from_feishu(trigger_day)
+        if water_warning:
+            warnings.append(water_warning)
+
+        cn_date_text = format_cn_date(trigger_day)
+        en_date_text = format_en_date(trigger_day)
+        water_level_text = str(water_data.get("water_level") or "--")
+        water_source_date = water_data.get("source_date")
+
         cn_doc = load_template_doc(req.cn_template_base64, CN_TEMPLATE_PATH, "cn")
         render_daily_stats_table(cn_doc, cn_items)
+        update_first_table_summary(
+            cn_doc,
+            date_text=cn_date_text,
+            weather_text=weather_data.get("weather_zh", "未知"),
+            wind_text=weather_data.get("wind_zh", "未知"),
+            water_level_text=water_level_text,
+            temp_text=weather_data.get("temp", "--"),
+        )
         cn_out = io.BytesIO()
         cn_doc.save(cn_out)
 
         en_doc = load_template_doc(req.en_template_base64, EN_TEMPLATE_PATH, "en")
         render_daily_stats_table(en_doc, en_items)
+        update_first_table_summary(
+            en_doc,
+            date_text=en_date_text,
+            weather_text=weather_data.get("weather_en", "Unknown"),
+            wind_text=weather_data.get("wind_en", "Unknown"),
+            water_level_text=water_level_text,
+            temp_text=weather_data.get("temp", "--"),
+        )
         en_out = io.BytesIO()
         en_doc.save(en_out)
 
-        return {
+        result = {
             "success": True,
             "cn_document_base64": base64.b64encode(cn_out.getvalue()).decode(),
             "en_document_base64": base64.b64encode(en_out.getvalue()).decode(),
-            "weather_info": {"date": "", "weather": "", "temp": ""},
+            "weather_info": {
+                "date": cn_date_text,
+                "weather": weather_data.get("weather_zh", "未知"),
+                "temp": weather_data.get("temp", "--"),
+                "wind": weather_data.get("wind_zh", "未知"),
+                "water_level": water_level_text,
+                "water_level_date": format_cn_date(water_source_date) if isinstance(water_source_date, date) else "",
+            },
         }
+        if warnings:
+            result["warnings"] = warnings
+        return result
     except Exception as e:
         return {"success": False, "message": str(e)}
 
