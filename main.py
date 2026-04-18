@@ -419,6 +419,25 @@ def format_en_date(d: date) -> str:
     return f"{months[d.month - 1]} {d.day}, {d.year}"
 
 
+_EN_MONTH_REGEX = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.?\s*\d{1,2},\s*\d{4}"
+
+
+def format_slash_date(d: date) -> str:
+    return f"{d.year}/{d.month}/{d.day}"
+
+
+def replace_date_in_text(text: str, target_day: date) -> tuple[str, bool]:
+    source = "" if text is None else str(text)
+    updated = source
+
+    updated = re.sub(r"\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日", format_cn_date(target_day), updated)
+    updated = re.sub(r"\d{4}\s*/\s*\d{1,2}\s*/\s*\d{1,2}", format_slash_date(target_day), updated)
+    updated = re.sub(_EN_MONTH_REGEX, format_en_date(target_day), updated, flags=re.IGNORECASE)
+    updated = re.sub(r"\d{4}-\d{1,2}-\d{1,2}", target_day.isoformat(), updated)
+
+    return updated, updated != source
+
+
 def _get_pakbeng_coordinates() -> tuple[float, float]:
     try:
         resp = requests.get(
@@ -739,6 +758,66 @@ def set_cell_text_preserve_style(cell, text: str):
         p.add_run(text)
 
 
+def set_paragraph_text_preserve_style(paragraph, text: str):
+    value = "" if text is None else str(text)
+    if paragraph.runs:
+        paragraph.runs[0].text = value
+        for run in list(paragraph.runs[1:]):
+            paragraph._element.remove(run._element)
+    else:
+        paragraph.add_run(value)
+
+
+def update_paragraph_date(paragraph, target_day: date) -> bool:
+    if paragraph.runs:
+        raw_text = "".join(run.text for run in paragraph.runs)
+    else:
+        raw_text = paragraph.text or ""
+    new_text, changed = replace_date_in_text(raw_text, target_day)
+    if changed:
+        set_paragraph_text_preserve_style(paragraph, new_text)
+    return changed
+
+
+def update_table_date_by_index(doc: Document, table_index: int, target_day: date) -> bool:
+    if table_index < 0 or table_index >= len(doc.tables):
+        return False
+    changed = False
+    table = doc.tables[table_index]
+    for row in table.rows:
+        for cell in row.cells:
+            for paragraph in cell.paragraphs:
+                if update_paragraph_date(paragraph, target_day):
+                    changed = True
+    return changed
+
+
+def update_footer_dates(doc: Document, target_day: date) -> bool:
+    changed = False
+    seen_footer_nodes: set[int] = set()
+    for section in doc.sections:
+        for attr in ("footer", "first_page_footer", "even_page_footer"):
+            footer = getattr(section, attr, None)
+            if footer is None:
+                continue
+            node_id = id(footer._element)
+            if node_id in seen_footer_nodes:
+                continue
+            seen_footer_nodes.add(node_id)
+
+            for paragraph in footer.paragraphs:
+                if update_paragraph_date(paragraph, target_day):
+                    changed = True
+
+            for table in footer.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            if update_paragraph_date(paragraph, target_day):
+                                changed = True
+    return changed
+
+
 def clear_vmerge(cell):
     tc_pr = cell._tc.get_or_add_tcPr()
     for vm in tc_pr.findall(qn('w:vMerge')):
@@ -944,6 +1023,8 @@ async def generate_from_template(req: GenerateFromTemplateRequest):
             water_level_text=water_level_text,
             temp_text=weather_data.get("temp", "--"),
         )
+        update_table_date_by_index(cn_doc, 2, trigger_day)
+        update_footer_dates(cn_doc, trigger_day)
         cn_out = io.BytesIO()
         cn_doc.save(cn_out)
 
@@ -957,6 +1038,8 @@ async def generate_from_template(req: GenerateFromTemplateRequest):
             water_level_text=water_level_text,
             temp_text=weather_data.get("temp", "--"),
         )
+        update_table_date_by_index(en_doc, 2, trigger_day)
+        update_footer_dates(en_doc, trigger_day)
         en_out = io.BytesIO()
         en_doc.save(en_out)
 
@@ -1058,6 +1141,7 @@ async def update_date_weather(req: UpdateDateWeatherRequest):
         now = datetime.now()
         date_str = f"{now.year}年{now.month}月{now.day}日"
         weather_str = "天气：晴                气温：20℃~30℃"
+        trigger_day = datetime.now(BANGKOK_TZ).date()
         
         if doc.tables:
             table = doc.tables[0]
@@ -1071,6 +1155,9 @@ async def update_date_weather(req: UpdateDateWeatherRequest):
                     cells[-1].text = ""
                     run = cells[-1].paragraphs[0].add_run(weather_str)
                     format_run_font(run)
+
+        update_table_date_by_index(doc, 2, trigger_day)
+        update_footer_dates(doc, trigger_day)
         
         out = io.BytesIO()
         doc.save(out)
