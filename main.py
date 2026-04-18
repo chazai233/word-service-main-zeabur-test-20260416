@@ -420,13 +420,19 @@ def format_en_date(d: date) -> str:
 
 
 _EN_MONTH_REGEX = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.?\s*\d{1,2},\s*\d{4}"
+_MONTH_DOT_DAY_REGEX = r"(?<!\d)(?:0?[1-9]|1[0-2])\s*\.\s*(?:0?[1-9]|[12]\d|3[01])(?!\d)"
+_SIGNATURE_DATE_LABEL_REGEX = re.compile(r"(?:^|\s)(?:日期|Date)\s*[:：]", flags=re.IGNORECASE)
 
 
 def format_slash_date(d: date) -> str:
     return f"{d.year}/{d.month}/{d.day}"
 
 
-def replace_date_in_text(text: str, target_day: date) -> tuple[str, bool]:
+def format_month_dot_day(d: date) -> str:
+    return f"{d.month}.{d.day}"
+
+
+def replace_date_in_text(text: str, target_day: date, allow_month_dot_day: bool = False) -> tuple[str, bool]:
     source = "" if text is None else str(text)
     updated = source
 
@@ -434,6 +440,8 @@ def replace_date_in_text(text: str, target_day: date) -> tuple[str, bool]:
     updated = re.sub(r"\d{4}\s*/\s*\d{1,2}\s*/\s*\d{1,2}", format_slash_date(target_day), updated)
     updated = re.sub(_EN_MONTH_REGEX, format_en_date(target_day), updated, flags=re.IGNORECASE)
     updated = re.sub(r"\d{4}-\d{1,2}-\d{1,2}", target_day.isoformat(), updated)
+    if allow_month_dot_day:
+        updated = re.sub(_MONTH_DOT_DAY_REGEX, format_month_dot_day(target_day), updated)
 
     return updated, updated != source
 
@@ -768,12 +776,12 @@ def set_paragraph_text_preserve_style(paragraph, text: str):
         paragraph.add_run(value)
 
 
-def update_paragraph_date(paragraph, target_day: date) -> bool:
+def update_paragraph_date(paragraph, target_day: date, allow_month_dot_day: bool = False) -> bool:
     if paragraph.runs:
         raw_text = "".join(run.text for run in paragraph.runs)
     else:
         raw_text = paragraph.text or ""
-    new_text, changed = replace_date_in_text(raw_text, target_day)
+    new_text, changed = replace_date_in_text(raw_text, target_day, allow_month_dot_day=allow_month_dot_day)
     if changed:
         set_paragraph_text_preserve_style(paragraph, new_text)
     return changed
@@ -789,6 +797,37 @@ def update_table_date_by_index(doc: Document, table_index: int, target_day: date
             for paragraph in cell.paragraphs:
                 if update_paragraph_date(paragraph, target_day):
                     changed = True
+    return changed
+
+
+def update_table3_date(doc: Document, target_day: date, table_index: int = 2) -> bool:
+    if table_index < 0 or table_index >= len(doc.tables):
+        return False
+    table = doc.tables[table_index]
+    if len(table.rows) < 2 or len(table.rows[1].cells) < 1:
+        return False
+
+    changed = False
+    date_cell = table.rows[1].cells[0]
+    for paragraph in date_cell.paragraphs:
+        if update_paragraph_date(paragraph, target_day, allow_month_dot_day=True):
+            changed = True
+    return changed
+
+
+def update_body_signature_dates(doc: Document, target_day: date) -> bool:
+    changed = False
+    for paragraph in doc.paragraphs:
+        if paragraph.runs:
+            raw_text = "".join(run.text for run in paragraph.runs)
+        else:
+            raw_text = paragraph.text or ""
+        if not _SIGNATURE_DATE_LABEL_REGEX.search(raw_text):
+            continue
+        new_text, replaced = replace_date_in_text(raw_text, target_day, allow_month_dot_day=True)
+        if replaced:
+            set_paragraph_text_preserve_style(paragraph, new_text)
+            changed = True
     return changed
 
 
@@ -1023,7 +1062,8 @@ async def generate_from_template(req: GenerateFromTemplateRequest):
             water_level_text=water_level_text,
             temp_text=weather_data.get("temp", "--"),
         )
-        update_table_date_by_index(cn_doc, 2, trigger_day)
+        update_table3_date(cn_doc, trigger_day)
+        update_body_signature_dates(cn_doc, trigger_day)
         update_footer_dates(cn_doc, trigger_day)
         cn_out = io.BytesIO()
         cn_doc.save(cn_out)
@@ -1038,7 +1078,8 @@ async def generate_from_template(req: GenerateFromTemplateRequest):
             water_level_text=water_level_text,
             temp_text=weather_data.get("temp", "--"),
         )
-        update_table_date_by_index(en_doc, 2, trigger_day)
+        update_table3_date(en_doc, trigger_day)
+        update_body_signature_dates(en_doc, trigger_day)
         update_footer_dates(en_doc, trigger_day)
         en_out = io.BytesIO()
         en_doc.save(en_out)
@@ -1156,7 +1197,8 @@ async def update_date_weather(req: UpdateDateWeatherRequest):
                     run = cells[-1].paragraphs[0].add_run(weather_str)
                     format_run_font(run)
 
-        update_table_date_by_index(doc, 2, trigger_day)
+        update_table3_date(doc, trigger_day)
+        update_body_signature_dates(doc, trigger_day)
         update_footer_dates(doc, trigger_day)
         
         out = io.BytesIO()
