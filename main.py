@@ -394,20 +394,51 @@ def parse_english_translated_items(raw_text: Optional[str]) -> Optional[List[Dic
     return items or None
 
 
+def _resolve_business_date_by_trigger_time(trigger_dt: datetime) -> date:
+    if trigger_dt.tzinfo is None:
+        local_dt = trigger_dt.replace(tzinfo=BANGKOK_TZ)
+    else:
+        local_dt = trigger_dt.astimezone(BANGKOK_TZ)
+    if local_dt.hour >= 18:
+        return local_dt.date()
+    return (local_dt - timedelta(days=1)).date()
+
+
 def parse_trigger_date(value: Optional[str]) -> date:
     if isinstance(value, str):
         text = value.strip()
         if text:
+            # 日期字符串视为手工指定业务日期，保持兼容
             for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d"):
                 try:
                     return datetime.strptime(text, fmt).date()
                 except Exception:
                     pass
+
+            normalized = text
+            if normalized.endswith("Z"):
+                normalized = normalized[:-1] + "+00:00"
             try:
-                return datetime.fromisoformat(text).date()
+                parsed_dt = datetime.fromisoformat(normalized)
+                return _resolve_business_date_by_trigger_time(parsed_dt)
             except Exception:
                 pass
-    return datetime.now(BANGKOK_TZ).date()
+
+            for fmt in (
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%d %H:%M",
+                "%Y/%m/%d %H:%M:%S",
+                "%Y/%m/%d %H:%M",
+                "%Y.%m.%d %H:%M:%S",
+                "%Y.%m.%d %H:%M",
+            ):
+                try:
+                    parsed_dt = datetime.strptime(text, fmt).replace(tzinfo=BANGKOK_TZ)
+                    return _resolve_business_date_by_trigger_time(parsed_dt)
+                except Exception:
+                    pass
+
+    return _resolve_business_date_by_trigger_time(datetime.now(BANGKOK_TZ))
 
 
 def format_cn_date(d: date) -> str:
@@ -1179,10 +1210,13 @@ async def update_date_weather(req: UpdateDateWeatherRequest):
         file_bytes = base64.b64decode(req.document_base64)
         doc = Document(io.BytesIO(file_bytes))
         
-        now = datetime.now()
-        date_str = f"{now.year}年{now.month}月{now.day}日"
-        weather_str = "天气：晴                气温：20℃~30℃"
-        trigger_day = datetime.now(BANGKOK_TZ).date()
+        trigger_day = parse_trigger_date(None)
+        date_str = format_cn_date(trigger_day)
+        weather_data, _ = fetch_pakbeng_weather(trigger_day)
+        weather_str = (
+            f"天气：{weather_data.get('weather_zh', '未知')}"
+            f"                气温：{weather_data.get('temp', '--')}"
+        )
         
         if doc.tables:
             table = doc.tables[0]
