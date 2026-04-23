@@ -551,7 +551,10 @@ def fetch_pakbeng_weather(target_date: date) -> tuple[Dict[str, str], Optional[s
     }
     api_key = os.getenv("VISUAL_CROSSING_API_KEY", "").strip()
     if not api_key:
-        return weather, "未配置 VISUAL_CROSSING_API_KEY，已使用默认天气"
+        # 兼容旧变量名：可直接把 Visual Crossing Key 填到 OPENWEATHER_API_KEY
+        api_key = os.getenv("OPENWEATHER_API_KEY", "").strip()
+    if not api_key:
+        return weather, "未配置 VISUAL_CROSSING_API_KEY（或 OPENWEATHER_API_KEY），已使用默认天气"
 
     try:
         lat, lon = PAKBENG_COORD_FALLBACK
