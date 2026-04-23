@@ -411,7 +411,13 @@ def parse_trigger_date(value: Optional[str]) -> date:
             # 日期字符串视为手工指定业务日期，保持兼容
             for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d"):
                 try:
-                    return datetime.strptime(text, fmt).date()
+                    parsed_date = datetime.strptime(text, fmt).date()
+                    now_local = datetime.now(BANGKOK_TZ)
+                    # 兼容 Dify 仅传 YYYY-MM-DD（通常为“今天”）的场景：
+                    # 若与服务端“今天”一致，则按触发时刻走 18:00 分界规则。
+                    if parsed_date == now_local.date():
+                        return _resolve_business_date_by_trigger_time(now_local)
+                    return parsed_date
                 except Exception:
                     pass
 
