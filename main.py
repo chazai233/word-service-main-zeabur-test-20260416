@@ -12,7 +12,6 @@ import json
 import re
 import os
 import requests
-from collections import Counter
 from copy import deepcopy
 from datetime import datetime, timedelta, date
 from zoneinfo import ZoneInfo
@@ -484,69 +483,26 @@ def replace_date_in_text(text: str, target_day: date, allow_month_dot_day: bool 
     return updated, updated != source
 
 
-def _get_pakbeng_coordinates_openweather(api_key: str) -> tuple[float, float]:
-    try:
-        resp = requests.get(
-            "https://api.openweathermap.org/geo/1.0/direct",
-            params={"q": "Pak Beng,LA", "limit": 1, "appid": api_key},
-            timeout=20,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        if isinstance(data, list) and data:
-            lat = data[0].get("lat")
-            lon = data[0].get("lon")
-            if lat is not None and lon is not None:
-                return float(lat), float(lon)
-    except Exception:
-        pass
-    return PAKBENG_COORD_FALLBACK
-
-
-def _openweather_condition_text(weather_id: Optional[int]) -> tuple[str, str]:
-    if weather_id is None:
+def _visual_crossing_condition_text(conditions: Optional[str], icon: Optional[str]) -> tuple[str, str]:
+    text = ((icon or "") + " " + (conditions or "")).strip().lower()
+    if not text:
         return "未知", "Unknown"
-    exact_map = {
-        800: ("晴", "Clear"),
-        801: ("少云", "Few Clouds"),
-        802: ("多云", "Scattered Clouds"),
-        803: ("阴", "Broken Clouds"),
-        804: ("阴天", "Overcast Clouds"),
-    }
-    if weather_id in exact_map:
-        return exact_map[weather_id]
-    category_map = {
-        2: ("雷暴", "Thunderstorm"),
-        3: ("毛毛雨", "Drizzle"),
-        5: ("雨", "Rain"),
-        6: ("雪", "Snow"),
-        7: ("雾", "Mist"),
-    }
-    return category_map.get(weather_id // 100, ("未知", "Unknown"))
 
+    if any(k in text for k in ("thunder", "storm")):
+        return "雷暴", "Thunderstorm"
+    if any(k in text for k in ("snow", "sleet", "ice")):
+        return "雪", "Snow"
+    if any(k in text for k in ("rain", "shower", "drizzle")):
+        return "雨", "Rain"
+    if any(k in text for k in ("fog", "mist", "haze")):
+        return "雾", "Fog"
+    if any(k in text for k in ("cloud", "overcast")):
+        return "多云", "Cloudy"
+    if any(k in text for k in ("clear", "sunny")):
+        return "晴", "Clear"
 
-def _build_weather_entry(
-    *,
-    dt_ts: int,
-    weather_id: Optional[int],
-    temp_min: Optional[float],
-    temp_max: Optional[float],
-    wind_speed_ms: Optional[float],
-) -> Dict[str, Any]:
-    return {
-        "local_dt": datetime.fromtimestamp(dt_ts, tz=BANGKOK_TZ),
-        "weather_id": weather_id,
-        "temp_min": temp_min,
-        "temp_max": temp_max,
-        "wind_kmh": (wind_speed_ms * 3.6) if wind_speed_ms is not None else None,
-    }
-
-
-def _to_int(value: Any) -> Optional[int]:
-    try:
-        return int(value)
-    except Exception:
-        return None
+    en = (conditions or "").strip() or "Unknown"
+    return "未知", en
 
 
 def _to_float(value: Any) -> Optional[float]:
@@ -554,34 +510,6 @@ def _to_float(value: Any) -> Optional[float]:
         return float(value)
     except Exception:
         return None
-
-
-def _summarize_weather_entries(entries: List[Dict[str, Any]], target_date: date) -> Dict[str, str]:
-    same_day = [x for x in entries if x.get("local_dt") and x["local_dt"].date() == target_date]
-    rows = same_day if same_day else entries
-
-    weather_id = None
-    noon_rows = [x for x in rows if x.get("local_dt") and x["local_dt"].hour == 12 and isinstance(x.get("weather_id"), int)]
-    if noon_rows:
-        weather_id = noon_rows[0]["weather_id"]
-    else:
-        ids = [x["weather_id"] for x in rows if isinstance(x.get("weather_id"), int)]
-        if ids:
-            weather_id = Counter(ids).most_common(1)[0][0]
-
-    temp_min_values = [x["temp_min"] for x in rows if isinstance(x.get("temp_min"), (int, float))]
-    temp_max_values = [x["temp_max"] for x in rows if isinstance(x.get("temp_max"), (int, float))]
-    wind_values = [x["wind_kmh"] for x in rows if isinstance(x.get("wind_kmh"), (int, float))]
-
-    weather_zh, weather_en = _openweather_condition_text(weather_id)
-    wind_zh, wind_en = _wind_force_text(max(wind_values) if wind_values else None)
-    return {
-        "weather_zh": weather_zh,
-        "weather_en": weather_en,
-        "wind_zh": wind_zh,
-        "wind_en": wind_en,
-        "temp": _temp_text(min(temp_min_values) if temp_min_values else None, max(temp_max_values) if temp_max_values else None),
-    }
 
 
 def _wind_force_text(speed_kmh: Optional[float]) -> tuple[str, str]:
@@ -621,118 +549,62 @@ def fetch_pakbeng_weather(target_date: date) -> tuple[Dict[str, str], Optional[s
         "wind_en": "Unknown",
         "temp": "--",
     }
-    api_key = os.getenv("OPENWEATHER_API_KEY", "").strip()
+    api_key = os.getenv("VISUAL_CROSSING_API_KEY", "").strip()
     if not api_key:
-        return weather, "未配置 OPENWEATHER_API_KEY，已使用默认天气"
+        return weather, "未配置 VISUAL_CROSSING_API_KEY，已使用默认天气"
 
     try:
-        lat, lon = _get_pakbeng_coordinates_openweather(api_key)
-        today = datetime.now(BANGKOK_TZ).date()
-        entries: List[Dict[str, Any]] = []
-        warnings: List[str] = []
+        lat, lon = PAKBENG_COORD_FALLBACK
+        date_text = target_date.isoformat()
+        timeline_url = (
+            "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/"
+            f"timeline/{lat},{lon}/{date_text}/{date_text}"
+        )
+        resp = requests.get(
+            timeline_url,
+            params={
+                "unitGroup": "metric",
+                "include": "days",
+                "contentType": "json",
+                "lang": "en",
+                "key": api_key,
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        days = payload.get("days") or []
+        if not days:
+            return weather, f"Visual Crossing 未返回 {date_text} 的天气数据"
 
-        if target_date < today:
-            history_ts = int(datetime(target_date.year, target_date.month, target_date.day, 12, 0, tzinfo=BANGKOK_TZ).timestamp())
-            try:
-                resp = requests.get(
-                    "https://api.openweathermap.org/data/3.0/onecall/timemachine",
-                    params={
-                        "lat": lat,
-                        "lon": lon,
-                        "dt": history_ts,
-                        "appid": api_key,
-                        "units": "metric",
-                    },
-                    timeout=25,
-                )
-                resp.raise_for_status()
-                payload = resp.json()
-                for item in payload.get("data") or []:
-                    dt_ts = _to_int(item.get("dt"))
-                    if dt_ts is None:
-                        continue
-                    if datetime.fromtimestamp(dt_ts, tz=BANGKOK_TZ).date() != target_date:
-                        continue
-                    weather_info = (item.get("weather") or [{}])[0]
-                    entries.append(
-                        _build_weather_entry(
-                            dt_ts=dt_ts,
-                            weather_id=_to_int(weather_info.get("id")),
-                            temp_min=_to_float(item.get("temp")),
-                            temp_max=_to_float(item.get("temp")),
-                            wind_speed_ms=_to_float(item.get("wind_speed")),
-                        )
-                    )
-            except Exception as exc:
-                warnings.append(f"OpenWeather 历史天气查询失败: {exc}")
+        day = None
+        for item in days:
+            if str(item.get("datetime") or "").strip() == date_text:
+                day = item
+                break
+        if day is None:
+            return weather, f"Visual Crossing 响应中未匹配到目标日期 {date_text}"
 
-        if not entries and target_date >= today:
-            try:
-                resp = requests.get(
-                    "https://api.openweathermap.org/data/2.5/forecast",
-                    params={
-                        "lat": lat,
-                        "lon": lon,
-                        "appid": api_key,
-                        "units": "metric",
-                    },
-                    timeout=25,
-                )
-                resp.raise_for_status()
-                payload = resp.json()
-                for item in payload.get("list") or []:
-                    dt_ts = _to_int(item.get("dt"))
-                    if dt_ts is None:
-                        continue
-                    if datetime.fromtimestamp(dt_ts, tz=BANGKOK_TZ).date() != target_date:
-                        continue
-                    weather_info = (item.get("weather") or [{}])[0]
-                    main_info = item.get("main") or {}
-                    wind_info = item.get("wind") or {}
-                    entries.append(
-                        _build_weather_entry(
-                            dt_ts=dt_ts,
-                            weather_id=_to_int(weather_info.get("id")),
-                            temp_min=_to_float(main_info.get("temp_min")),
-                            temp_max=_to_float(main_info.get("temp_max")),
-                            wind_speed_ms=_to_float(wind_info.get("speed")),
-                        )
-                    )
-            except Exception as exc:
-                warnings.append(f"OpenWeather 预报天气查询失败: {exc}")
+        weather_zh, weather_en = _visual_crossing_condition_text(
+            conditions=str(day.get("conditions") or "").strip(),
+            icon=str(day.get("icon") or "").strip(),
+        )
+        wind_zh, wind_en = _wind_force_text(_to_float(day.get("windspeed")))
+        temp_min = _to_float(day.get("tempmin"))
+        temp_max = _to_float(day.get("tempmax"))
+        if temp_min is None and temp_max is None:
+            temp_now = _to_float(day.get("temp"))
+            temp_min = temp_now
+            temp_max = temp_now
 
-        if not entries:
-            resp = requests.get(
-                "https://api.openweathermap.org/data/2.5/weather",
-                params={
-                    "lat": lat,
-                    "lon": lon,
-                    "appid": api_key,
-                    "units": "metric",
-                },
-                timeout=20,
-            )
-            resp.raise_for_status()
-            payload = resp.json()
-            dt_ts = _to_int(payload.get("dt")) or int(datetime.now(BANGKOK_TZ).timestamp())
-            weather_info = (payload.get("weather") or [{}])[0]
-            main_info = payload.get("main") or {}
-            wind_info = payload.get("wind") or {}
-            entries.append(
-                _build_weather_entry(
-                    dt_ts=dt_ts,
-                    weather_id=_to_int(weather_info.get("id")),
-                    temp_min=_to_float(main_info.get("temp_min")),
-                    temp_max=_to_float(main_info.get("temp_max")),
-                    wind_speed_ms=_to_float(wind_info.get("speed")),
-                )
-            )
-            if datetime.fromtimestamp(dt_ts, tz=BANGKOK_TZ).date() != target_date:
-                warnings.append("目标日期无可用天气数据，已使用最新实况天气")
-
-        weather = _summarize_weather_entries(entries, target_date)
-        warning_text = "；".join(dict.fromkeys(warnings)) if warnings else None
-        return weather, warning_text
+        weather = {
+            "weather_zh": weather_zh,
+            "weather_en": weather_en,
+            "wind_zh": wind_zh,
+            "wind_en": wind_en,
+            "temp": _temp_text(temp_min, temp_max),
+        }
+        return weather, None
     except Exception as e:
         return weather, f"天气获取失败，已使用默认值: {e}"
 
