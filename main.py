@@ -745,13 +745,13 @@ def fetch_water_level_from_feishu(target_date: date) -> tuple[Dict[str, Any], Op
         if not rows:
             return result, "飞书未查询到水位记录，已使用默认水位"
 
+        # 水位要求“始终最新”：不再受业务日期(target_date)限制，直接取最新记录。
         dated_rows = [x for x in rows if isinstance(x.get("date"), date)]
-        selected = None
         if dated_rows:
-            valid = [x for x in dated_rows if x["date"] <= target_date]
-            selected = max(valid, key=lambda x: x["date"]) if valid else max(dated_rows, key=lambda x: x["date"])
-        if selected is None:
-            selected = rows[0]
+            selected = max(dated_rows, key=lambda x: x["date"])
+        else:
+            # 无可解析日期时，回退到最后一条，尽量贴近“最新”。
+            selected = rows[-1]
 
         result["water_level"] = selected.get("water_level") or "--"
         result["source_date"] = selected.get("date")
