@@ -651,6 +651,47 @@ def _parse_bitable_date(value: Any) -> Optional[date]:
     return None
 
 
+def _parse_bitable_datetime(value: Any) -> Optional[datetime]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        ts = float(value)
+        if ts > 1_000_000_000_000:
+            ts = ts / 1000.0
+        try:
+            return datetime.fromtimestamp(ts, tz=BANGKOK_TZ)
+        except Exception:
+            return None
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return None
+        normalized = raw.replace("年", "-").replace("月", "-").replace("日", "").replace("/", "-").replace(".", "-")
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+            try:
+                dt = datetime.strptime(normalized, fmt)
+                return dt.replace(tzinfo=BANGKOK_TZ)
+            except Exception:
+                pass
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00")).astimezone(BANGKOK_TZ)
+        except Exception:
+            return None
+    if isinstance(value, list):
+        for item in value:
+            dt = _parse_bitable_datetime(item)
+            if dt:
+                return dt
+        return None
+    if isinstance(value, dict):
+        for key in ("value", "text", "name", "date"):
+            if key in value:
+                dt = _parse_bitable_datetime(value.get(key))
+                if dt:
+                    return dt
+    return None
+
+
 def _parse_water_level_text(value: Any) -> str:
     if value is None:
         return ""
@@ -732,10 +773,10 @@ def fetch_water_level_from_feishu(target_date: date) -> tuple[Dict[str, Any], Op
             payload = data.get("data") or {}
             for item in payload.get("items", []):
                 fields = item.get("fields") or {}
-                obs_date = _parse_bitable_date(fields.get(date_field))
+                obs_dt = _parse_bitable_datetime(fields.get(date_field))
                 water_text = _parse_water_level_text(fields.get(water_field))
                 if water_text:
-                    rows.append({"date": obs_date, "water_level": water_text})
+                    rows.append({"datetime": obs_dt, "date": obs_dt.date() if obs_dt else None, "water_level": water_text})
             if not payload.get("has_more"):
                 break
             page_token = payload.get("page_token")
@@ -746,8 +787,11 @@ def fetch_water_level_from_feishu(target_date: date) -> tuple[Dict[str, Any], Op
             return result, "飞书未查询到水位记录，已使用默认水位"
 
         # 水位要求“始终最新”：不再受业务日期(target_date)限制，直接取最新记录。
+        datetime_rows = [x for x in rows if isinstance(x.get("datetime"), datetime)]
         dated_rows = [x for x in rows if isinstance(x.get("date"), date)]
-        if dated_rows:
+        if datetime_rows:
+            selected = max(datetime_rows, key=lambda x: x["datetime"])
+        elif dated_rows:
             selected = max(dated_rows, key=lambda x: x["date"])
         else:
             # 无可解析日期时，回退到最后一条，尽量贴近“最新”。
